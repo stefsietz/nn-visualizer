@@ -23,6 +23,7 @@ The CNN Editor should work right away with the included scene (in the Assets/Sce
 For the model loading, please have a look at the "cifar10" python project. It includes code for building and training a simple cifar10 classification CNN with the necessary layer naming and checkpoint output, as well as the ckpt converter, that runs cifar10 test examples to get the according neuron activations and writes out a JSON that can then be loaded by the Unity project.
 
 Alternatively load this set of example JSONs: https://drive.google.com/open?id=1Hr3sveB1hiVO37OmwOWrOLU8EqyMmrG3
+You have to select the containing folder after pressing the "Load" button.
 
 ## Contributing
 
