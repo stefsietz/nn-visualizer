@@ -1,0 +1,10 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+*.json
+*.pdf
+*.psd
+abgabe/
+abgabe.zip
+doctest
+html/
+presentation/
+**Houdini**
