@@ -76,7 +76,7 @@ Material:
     - _pow: 2.16
     - _squarePixels: 1
     - _totalVerts: 363
-    - _useBlueRedCmap: 1
+    - _useBlueRedCmap: 0
     - _width: 0.05
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

@@ -1,8 +1,8 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
-*.json
 *.pdf
 *.psd
 abgabe/
+**cifar10/jsons/**
 abgabe.zip
 doctest
 html/

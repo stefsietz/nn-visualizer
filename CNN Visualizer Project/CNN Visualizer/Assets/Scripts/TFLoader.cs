@@ -35,8 +35,6 @@ public class TFLoader : MonoBehaviour {
 
     public Text classLabel;
 
-    public Text sampleToLoad;
-
     // Use this for initialization
     void Start () {
 
@@ -54,7 +52,7 @@ public class TFLoader : MonoBehaviour {
             GameObject.Destroy(go);
         }
 
-        List<LayerData> layerList = ReadGraph(sampleToLoad.text);
+        List<LayerData> layerList = ReadGraph();
 
         GameObject input = null;
 
@@ -84,7 +82,7 @@ public class TFLoader : MonoBehaviour {
     /// </summary>
     /// <param name="testSample"></param>
     /// <returns></returns>
-    public List<LayerData> ReadGraph(string testSample)
+    public List<LayerData> ReadGraph()
     {
         List<LayerData> layerDataList = new List<LayerData>();
 
