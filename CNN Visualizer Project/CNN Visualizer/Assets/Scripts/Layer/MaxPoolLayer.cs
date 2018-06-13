@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 {
@@ -14,6 +15,9 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     public float nodeSize;
 
     private List<FeatureMap> _featureMaps;
+
+    private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
+    private int[] activationTensorShape = new int[4];
 
     /// <summary>
     /// Represents a Maxpool Layer of a CNN.
@@ -144,12 +148,32 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         _mesh.subMeshCount = 2;
 
         List<Vector3> verts = new List<Vector3>();
+        List<Color> cols = new List<Color>();
         List<int> inds = new List<int>();
 
         Vector3 posDiff = new Vector3(0, 0, -zOffset);
         Vector3 zPos = new Vector3(0, 0, ZPosition());
 
         AddNodes(verts, inds);
+
+        for (int i = 0; i < verts.Count; i++)
+        {
+            if (_activationTensorPerEpoch.ContainsKey(epoch))
+            {
+
+                int[] index = Util.GetMultiDimIndices(activationTensorShape, i);
+
+                Array activationTensor = _activationTensorPerEpoch[epoch];
+                float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
+                cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
+
+                //cols.Add(Color.white);
+            }
+            else
+            {
+                cols.Add(Color.black);
+            }
+        }
 
         List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations);
 
@@ -193,6 +217,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
                 for (int k = 0; k < start_verts.Length; k++)
                 {
                     verts.Add(start_verts[k] + zPos + posDiff);
+
                     lineInds.Add(start_ind);
                     if (edgeBundle > 0)
                     {
@@ -206,8 +231,8 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 
 
         _mesh.SetVertices(verts);
-        List<Color> cols = new List<Color>();
-        for(int i=0; i<verts.Count; i++)
+        int diff = verts.Count - cols.Count;
+        for(int i=0; i< diff; i++)
         {
             cols.Add(Color.black);
         }
@@ -239,6 +264,26 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             edgeBundle = 1f - (level - 1f);
             allCalculations = 1f;
         }
+    }
+
+    public void SetActivationTensorForEpoch(Array tensor, int epoch)
+    {
+        _activationTensorPerEpoch.Add(epoch, tensor);
+    }
+
+    public Array GetActivationTensorForEpoch(int epoch)
+    {
+        return _activationTensorPerEpoch[epoch];
+    }
+
+    public void SetActivationTensorShape(int[] tensorShape)
+    {
+        this.activationTensorShape = tensorShape;
+    }
+
+    public int[] GetActivationTensorShape()
+    {
+        return activationTensorShape;
     }
 
     public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)

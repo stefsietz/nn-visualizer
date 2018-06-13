@@ -74,12 +74,21 @@ public class GuiManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the brightness of all nodes and edges (color contrast when rendering red/blue mapping)
+    /// Sets the brightness of all edges (color contrast when rendering red/blue mapping)
     /// </summary>
     /// <param name="value"></param>
-    public void SetBrightness(float value)
+    public void SetWeightBrightness(float value)
     {
-        GlobalManager.Instance.SetBrightness(value);
+        GlobalManager.Instance.SetWeightBrightness(value);
+    }
+
+    /// <summary>
+    /// Sets the brightness of all nodes (color contrast when rendering red/blue mapping)
+    /// </summary>
+    /// <param name="value"></param>
+    public void SetPointBrightness(float value)
+    {
+        GlobalManager.Instance.SetPointBrightness(value);
     }
 
     public void SetExpansionLevel(float value)

@@ -8,11 +8,10 @@ import numpy as np
 import json
 
 from cnn_model import CNN_Model
+from load_data import *
 
 from tensorflow.python.tools import inspect_checkpoint as chkp
 from tensorflow.python import pywrap_tensorflow
-
-classNames = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
 def get_weights(trainable_ops):
     o = {}
@@ -30,12 +29,13 @@ def get_activations(vis_ops):
             o[name] = op
     return o
 
-def get_json_array(vis_ops, weight_ops, weight_values, activation_values, input_values, output_value):
+def get_json_array(vis_ops, weight_ops, weight_values, activation_values, input_values, output_value, class_names):
     o = []
     input_shape = input_values.shape
     input_values = input_values.astype(np.float32)
     input_values = np.divide(input_values, 255)
-    o.append((classNames[output_value], 'input', input_shape, np.zeros(input_shape).tolist(), input_shape, input_values.tolist())) #TODO: activations are dummies for now
+
+    o.append((class_names[output_value], 'input', input_shape, np.zeros(input_shape).tolist(), input_shape, input_values.tolist())) #TODO: activations are dummies for now
 
     vis_op_names = set()
 
@@ -46,15 +46,16 @@ def get_json_array(vis_ops, weight_ops, weight_values, activation_values, input_
         vis_op_names.add(name)
         if('maxpool' in op.name):
             act_val = activation_values[name]
-            o.append((classNames[output_value], name, op.shape[1:3].as_list(), np.zeros(op.shape[1:3].as_list()).tolist(), act_val.shape, act_val.tolist()))
+            o.append((class_names[output_value], name, op.shape[1:3].as_list(), np.zeros(op.shape[1:3].as_list()).tolist(), act_val.shape, act_val.tolist()))
 
         elif(name in weight_ops.keys()):
             act_val = activation_values[name]
             shape = weight_ops[name].shape.as_list()
             weights = weight_values[name]
-            o.append((classNames[output_value], name, shape, weights.tolist(), act_val.shape, act_val.tolist()))
+            o.append((class_names[output_value], name, shape, weights.tolist(), act_val.shape, act_val.tolist()))
 
 
+    o.append(class_names)
     return o
 
 
@@ -87,6 +88,7 @@ USAGE
         parser.add_argument("-dln", "--dense_layer_num", type=int, dest="dense_layer_num", action="store", default=1)
         parser.add_argument("-dlu", "--dense_layer_units", type=int, dest="dense_layer_units", action="store", default="256")
         parser.add_argument("-do", "--dropout", type=float, dest="dropout", action="store", default=0.2)
+        parser.add_argument("-ds", "--dataset", type=str, dest="dataset", action="store", default='cifar10')
         parser.add_argument("-ts", "--test_sample", type=int, dest="test_sample", action="store", default=0)
 
         args = parser.parse_args()
@@ -98,11 +100,9 @@ USAGE
         sys.stderr.write(indent + "  for help use --help")
         return 2
 
-    for ts in range(8, 100):
-        args.test_sample = ts
+    for ts in range(args.test_sample, args.test_sample+1):
+        test_sample = 2
         irace = args.irace
-
-        b_test = np.load('dataset/batch_test.npy')
 
         model = CNN_Model("cnn_model",
                           cnn_group_num=args.cnn_group_num,
@@ -113,13 +113,11 @@ USAGE
                           dropout=args.dropout
                           )
 
-        x_test = b_test[:, 1:]
-        y_test = b_test[:, 0]
+        args.dataset = ''
+        x, y, x_test, y_test, width, class_names = load_dataset(args.dataset)
 
-        x_test = np.reshape(x_test, [-1, 32, 32, 1])
-
-        dummy_x = np.expand_dims(x_test[args.test_sample], 0)
-        dummy_y = np.expand_dims(y_test[args.test_sample], 0)
+        dummy_x = np.expand_dims(x_test[test_sample], 0)
+        dummy_y = np.expand_dims(y_test[test_sample], 0)
 
         for i in range(11):
             with tf.Session() as sess:
@@ -138,9 +136,9 @@ USAGE
 
                 #print(activation_values['conv0'].tolist())
 
-                json_base = get_json_array(vis_ops, weight_ops, weight_values, activation_values, input_values, dummy_y[0])
+                json_base = get_json_array(vis_ops, weight_ops, weight_values, activation_values, input_values, dummy_y[0], class_names)
 
-                outdir = "jsons/{}/".format(args.test_sample)
+                outdir = "jsons/{}/".format(test_sample)
                 filename = "{}epoch{}.json".format(outdir, i)
                 if(not os.path.exists(os.path.split(filename)[0])):
                     os.makedirs(outdir)

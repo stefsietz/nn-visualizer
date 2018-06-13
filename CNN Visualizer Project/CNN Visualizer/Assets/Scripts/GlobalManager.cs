@@ -13,6 +13,8 @@ public class GlobalManager : MonoBehaviour
 
     public Dictionary<int, string> predPerEpoch = new Dictionary<int, string>();
 
+    public List<string> classNames = new List<string>();
+
     /// <summary>
     /// Return singleton instance
     /// </summary>
@@ -33,7 +35,19 @@ public class GlobalManager : MonoBehaviour
         }
     }
 
-    public void SetBrightness(float value)
+    public void SetPointBrightness(float value)
+    {
+        List<Layer> layers = GetAllLayersUnOrdered();
+
+        foreach (Layer l in layers)
+        {
+
+            l.pointBrightness = value;
+            l.UpdateMesh();
+        }
+    }
+
+    public void SetWeightBrightness(float value)
     {
         List<Layer> layers = GetAllLayersUnOrdered();
 
@@ -41,8 +55,8 @@ public class GlobalManager : MonoBehaviour
         {
             if (!l.GetType().Equals(typeof(ImageLayer)))
             {
-                l.pointBrightness = value;
-                l.CalcMesh();
+                l.weightBrightness = value;
+                l.UpdateMesh();
             }
         }
     }
@@ -74,6 +88,10 @@ public class GlobalManager : MonoBehaviour
             } else if (l.GetType().Equals(typeof(FCLayer)))
             {
                 ((FCLayer)l).SetEpoch(epoch);
+            }
+            else if (l.GetType().Equals(typeof(MaxPoolLayer)))
+            {
+                ((MaxPoolLayer)l).SetEpoch(epoch);
             }
         }
     }

@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 from cnn_model import CNN_Model
+from load_data import *
 
 
 def csv_to_batch(filename):
@@ -57,6 +58,7 @@ USAGE
         parser.add_argument("-dln", "--dense_layer_num", type=int, dest="dense_layer_num", action="store", default=1)
         parser.add_argument("-dlu", "--dense_layer_units", type=int, dest="dense_layer_units", action="store", default="256")
         parser.add_argument("-do", "--dropout", type=float, dest="dropout", action="store", default=0.2)
+        parser.add_argument("-ds", "--dataset", type=str, dest="dataset", action="store", default='cifar10')
 
         args = parser.parse_args()
 
@@ -67,20 +69,7 @@ USAGE
         sys.stderr.write(indent + "  for help use --help")
         return 2
 
-    b1 = np.load('dataset/batch1.npy')
-    b2 = np.load('dataset/batch2.npy')
-    b3 = np.load('dataset/batch3.npy')
-    b4 = np.load('dataset/batch4.npy')
-    b5 = np.load('dataset/batch5.npy')
-
     irace = args.irace
-
-    b_test = np.load('dataset/batch_test.npy')
-
-    #plt.imshow(np.reshape(b_test[np.random.randint(0, 9999), 1:], [32, 32]), cmap='Greys_r')
-    #plt.show(block=True)
-
-    all_training_data = np.concatenate((b1, b2, b3, b4, b5))
 
     model = CNN_Model("cnn_model",
                       cnn_group_num=args.cnn_group_num,
@@ -91,18 +80,10 @@ USAGE
                       dropout=args.dropout
                       )
 
+    args.dataset = ''
+    x, y, x_test, y_test, width, _ = load_dataset(args.dataset)
 
-    x = all_training_data[:, 1:]
-    y = all_training_data[:, 0]
-
-    x = np.reshape(x, [-1, 32, 32, 1])
-
-    x_test = b_test[:, 1:]
-    y_test = b_test[:, 0]
-
-    x_test = np.reshape(x_test, [-1, 32, 32, 1])
-
-    x_inference = tf.placeholder(tf.uint8, [None, 32, 32, 1], name="X")
+    x_inference = tf.placeholder(tf.uint8, [None, width, width, 1], name="X")
     y_inference = tf.placeholder(tf.uint8, [None], name="Y")
 
     EPOCHS = args.epochs
@@ -112,7 +93,6 @@ USAGE
 
     dataset_train = tf.data.Dataset.from_tensor_slices((x,y)).repeat().shuffle(buffer_size=500).batch(batch_size)
     dataset_test = tf.data.Dataset.from_tensor_slices((x_test, y_test)).repeat().shuffle(buffer_size=500).batch(batch_size)
-    #dataset_inference = tf.data.Dataset.from_tensor_slices((x_inference, y_inference)).repeat().batch(1)
 
     n_batches = x.shape[0] // BATCH_SIZE
 
@@ -141,12 +121,6 @@ USAGE
 
     train_init_op = iter.make_initializer(dataset_train)
     test_init_op = iter.make_initializer(dataset_test, name="test_init_op")
-    #inference_init_op = iter.make_initializer(dataset_inference, name="inference_init")
-
-    im = tf.reshape(features, [32, 32, 1], 'reshape_to_2d')
-
-    #dummy_x = np.expand_dims(x_test[0], 0)
-    #dummy_y = np.expand_dims(y_test[0], 0)
 
     with tf.Session() as sess:
         train_writer = tf.summary.FileWriter('summaries' + '/train')
@@ -154,7 +128,6 @@ USAGE
 
         sess.run(tf.global_variables_initializer())
 
-        #sess.run(inference_init_op, feed_dict={x_inference:dummy_x, y_inference:dummy_y})
         saver = tf.train.Saver(max_to_keep=None)
         saver.save(sess, "ckpt/model.ckpt", global_step=0)
         for i in range(EPOCHS):
@@ -173,7 +146,6 @@ USAGE
             train_writer.add_summary(sess.run(summary, {loss_var: train_loss/n_batches, acc_var: train_acc/n_batches}), i)
             test_writer.add_summary(sess.run(summary, {loss_var: test_loss, acc_var: test_acc}), i)
 
-            #sess.run(inference_init_op, feed_dict={x_inference: dummy_x, y_inference: dummy_y})
             saver.save(sess, "ckpt/model.ckpt", global_step=i+1)
 
             if irace:

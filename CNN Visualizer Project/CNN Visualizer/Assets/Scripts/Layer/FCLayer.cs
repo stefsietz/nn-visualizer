@@ -248,7 +248,7 @@ public class FCLayer : InputAcceptingLayer
                                     index[0] = j;
                                 }
 
-                                float tensorVal = (float)tensor.GetValue(index) * 5f;
+                                float tensorVal = (float)tensor.GetValue(index) * weightBrightness;
                                 cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
                             }
                             else

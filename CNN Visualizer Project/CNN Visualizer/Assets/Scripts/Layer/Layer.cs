@@ -20,6 +20,9 @@ public abstract class Layer : MonoBehaviour
     public float pointBrightness = 1.0f;
 
     [Range(0.0f, 5.0f)]
+    public float weightBrightness = 1.0f;
+
+    [Range(0.0f, 5.0f)]
     public float zOffset = 1.0f;
 
     protected Layer _inputLayer;

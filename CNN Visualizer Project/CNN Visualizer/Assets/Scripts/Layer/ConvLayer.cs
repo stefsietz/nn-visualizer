@@ -237,7 +237,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
                             int[] index = { kernelInd1, kernelInd2, 0, h };
 
-                            float tensorVal = (float)tensor.GetValue(index) * pointBrightness;
+                            float tensorVal = (float)tensor.GetValue(index) * weightBrightness;
                             cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
                         } else
                         {

@@ -86,14 +86,14 @@ public class TFLoader : MonoBehaviour {
     {
         List<LayerData> layerDataList = new List<LayerData>();
 
-        string path = EditorUtility.OpenFolderPanel("Load png Textures", "", "");
+        string path = EditorUtility.OpenFolderPanel("Load json folder", "", "");
         string[] files = Directory.GetFiles(path, "*.json");
 
         for (int e = 0; e < files.Length; e++)
         {
             JArray layerArray = JArray.Parse(System.IO.File.ReadAllText(files[e]));
 
-            for (int i = 0; i < layerArray.Count; i++)
+            for (int i = 0; i < layerArray.Count-1; i++)
             {
                 LayerData layerData;
 
@@ -132,6 +132,13 @@ public class TFLoader : MonoBehaviour {
                 layerData.type = LayerTypeFromName(layerData.name);
 
                 layerDataList[i] = layerData;
+            }
+
+            JArray classNames = (JArray)layerArray[layerArray.Count-1];
+            foreach(JToken name in classNames)
+            {
+                string className = (string)name;
+                GlobalManager.Instance.classNames.Add(className);
             }
         }
 
@@ -274,7 +281,14 @@ public class TFLoader : MonoBehaviour {
                     GameObject inst = Instantiate(go);
                     MaxPoolLayer mpLayer = inst.GetComponent<MaxPoolLayer>();
                     mpLayer.filterSpacing = 0.025f;
+                    mpLayer.zOffset = 0.25f;
                     mpLayer._input = input;
+
+                    mpLayer.SetActivationTensorShape(l.activationShape);
+                    for (int i = 0; i < l.activationTensors.Count; i++)
+                    {
+                        mpLayer.SetActivationTensorForEpoch(l.activationTensors[i], i);
+                    }
                     return inst;
                 }
 
@@ -291,7 +305,7 @@ public class TFLoader : MonoBehaviour {
                     //TODO: here loading is reducing non output fc layers automatically by 4
                     if (!l.name.Contains("out"))
                     {
-                        fcLayer.reducedDepth = l.weightShape[1]/4;
+                        fcLayer.reducedDepth = l.weightShape[1];
 
                     }else
                     {
@@ -313,8 +327,7 @@ public class TFLoader : MonoBehaviour {
                     {
                         fcLayer.SetActivationTensorForEpoch(l.activationTensors[i], i);
 
-                        if (l.name.Contains("out")){ //TODO: Hardcoded to Cifar10, should be somehow dynamic
-                            string[] classNames = { "airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck" };
+                        if (l.name.Contains("out")){;
 
                             Array tensor = l.activationTensors[i];
                             float maxFloat = 0;
@@ -331,7 +344,7 @@ public class TFLoader : MonoBehaviour {
                                 }
                             }
 
-                            GlobalManager.Instance.predPerEpoch[i] = classNames[maxIndex];
+                            GlobalManager.Instance.predPerEpoch[i] = GlobalManager.Instance.classNames[maxIndex];
                         }
 
 
