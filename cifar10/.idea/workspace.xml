@@ -18,11 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="train_model.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="train_model.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="170">
-              <caret line="82" column="4" selection-start-line="82" selection-start-column="4" selection-end-line="82" selection-end-column="21" />
+            <state relative-caret-position="594">
+              <caret line="81" selection-start-line="81" selection-end-line="81" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -30,44 +30,13 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="load_data.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/load_data.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="552">
-              <caret line="36" selection-start-line="36" selection-end-line="36" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="convert_ckpt.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="convert_ckpt.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/convert_ckpt.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="680">
-              <caret line="103" column="23" selection-start-line="103" selection-start-column="23" selection-end-line="103" selection-end-column="23" />
+            <state relative-caret-position="1037">
+              <caret line="61" column="42" selection-start-line="61" selection-start-column="42" selection-end-line="61" selection-end-column="42" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="epoch0.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/jsons/0/epoch0.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-232" />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="cnn_model.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/cnn_model.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="32" column="76" selection-start-line="32" selection-start-column="69" selection-end-line="32" selection-end-column="76" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -90,6 +59,10 @@
       <find>tf.P</find>
       <find>args.ts</find>
       <find>32</find>
+      <find>ou</find>
+      <find>&quot;</find>
+      <find>input</find>
+      <find>conv</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -101,17 +74,17 @@
         <option value="$PROJECT_DIR$/target-runner.py" />
         <option value="$PROJECT_DIR$/cnn_model.py" />
         <option value="$PROJECT_DIR$/ex3.py" />
-        <option value="$PROJECT_DIR$/train_model.py" />
         <option value="$PROJECT_DIR$/load_data.py" />
         <option value="$PROJECT_DIR$/convert_ckpt.py" />
+        <option value="$PROJECT_DIR$/train_model.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="3882" />
-    <option name="y" value="418" />
-    <option name="width" value="2576" />
-    <option name="height" value="1416" />
+    <option name="x" value="646" />
+    <option name="y" value="-8" />
+    <option name="width" value="5152" />
+    <option name="height" value="2832" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -119,6 +92,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -141,7 +115,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -197,7 +170,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/convert_ckpt.py" />
-      <option name="PARAMETERS" value="--seed 123 -e 10 -lr 0.001 -bs 256 -cgs 1 -cgn 3 -cbf 4 -dln 1 -dlu 4 -do 0.5" />
+      <option name="PARAMETERS" value="&quot;ckpt&quot; -e 10 -lr 0.001 -bs 256 -cgs 1 -cgn 3 -cbf 4 -dln 1 -dlu 4 -do 0.5 -tsr 0-10" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -215,7 +188,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/train_model.py" />
-      <option name="PARAMETERS" value="--seed 123 -e 10 -lr 0.0002 -bs 256 -cgs 2 -cgn 3 -cbf 16 -dln 2 -dlu 256 -do 0.1" />
+      <option name="PARAMETERS" value="-e 10 -lr 0.0002 -bs 256 -cgs 2 -cgn 3 -cbf 16 -dln 2 -dlu 256 -do 0.1" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -263,27 +236,26 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="3832" y="428" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
+    <frame x="-6" y="-6" width="1933" height="1053" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22864583" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22876498" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32837406" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.2678002" />
+      <window_info anchor="bottom" id="Version Control" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Python Console" order="7" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.2678002" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.3985122" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="right" id="JSON Viewer" order="3" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.3985122" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.3292011" />
       <window_info anchor="right" id="Data View" order="3" />
     </layout>
   </component>
@@ -304,106 +276,10 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="74" />
+      <option name="time" value="96" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/cnn_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="850">
-          <caret line="52" column="46" selection-start-line="52" selection-start-column="46" selection-end-line="52" selection-end-column="46" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2431">
-          <caret line="152" column="66" selection-start-line="152" selection-start-column="66" selection-end-line="152" selection-end-column="66" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/convert_ckpt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2091">
-          <caret line="135" selection-start-line="135" selection-end-line="135" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda3/envs/tf_gpu/Lib/site-packages/tensorflow/python/ops/state_ops.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4607">
-          <caret line="283" selection-start-line="283" selection-end-line="283" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/target-runner.py" />
-    <entry file="file://$PROJECT_DIR$/cnn_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="16" column="43" selection-start-line="16" selection-start-column="43" selection-end-line="16" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2431">
-          <caret line="152" column="66" selection-start-line="152" selection-start-column="66" selection-end-line="152" selection-end-column="66" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/convert_ckpt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2091">
-          <caret line="135" selection-start-line="135" selection-end-line="135" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Anaconda3/envs/tf_gpu/Lib/site-packages/tensorflow/python/ops/state_ops.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4607">
-          <caret line="283" selection-start-line="283" selection-end-line="283" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cnn_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="16" column="43" selection-start-line="16" selection-start-column="43" selection-end-line="16" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/target-runner.py" />
-    <entry file="file://$PROJECT_DIR$/train_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2465">
-          <caret line="154" column="72" selection-start-line="154" selection-start-column="72" selection-end-line="154" selection-end-column="72" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/target-runner.py" />
     <entry file="file://$PROJECT_DIR$/cnn_model.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -590,9 +466,12 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/0/epoch0.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/cnn_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
+        <state relative-caret-position="399">
           <caret line="32" column="76" selection-start-line="32" selection-start-column="69" selection-end-line="32" selection-end-column="76" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
@@ -600,24 +479,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="82" column="4" selection-start-line="82" selection-start-column="4" selection-end-line="82" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/jsons/0/epoch0.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-232" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/load_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="552">
+        <state relative-caret-position="484">
           <caret line="36" selection-start-line="36" selection-end-line="36" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
@@ -625,12 +489,72 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch001.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch004.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch005.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch010.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-17" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch009.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch008.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch007.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch006.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_activations_epoch000.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76330">
+          <caret column="875001" selection-start-column="874999" selection-end-column="875001" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_weights_epoch000.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_activations_epoch010.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret column="87837" selection-start-column="87835" selection-end-column="87837" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/jsons/model_structure.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="84" selection-start-column="84" selection-end-column="84" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/convert_ckpt.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="103" column="23" selection-start-line="103" selection-start-column="23" selection-end-line="103" selection-end-column="23" />
+        <state relative-caret-position="1037">
+          <caret line="61" column="42" selection-start-line="61" selection-start-column="42" selection-end-line="61" selection-end-column="42" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="594">
+          <caret line="81" selection-start-line="81" selection-end-line="81" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -17,6 +17,7 @@ public class GuiManager : MonoBehaviour
 
     public float convFullresHeight = 5.0f;
 
+    public Text groundTruthLabel;
     public Text predictedLabel;
 
     public Material lineMaterial;
@@ -61,7 +62,20 @@ public class GuiManager : MonoBehaviour
     {
         epoch = (int)value;
         GlobalManager.Instance.SetEpoch(epoch);
-        predictedLabel.text = GlobalManager.Instance.predPerEpoch[epoch];
+        predictedLabel.text = GlobalManager.Instance.predPerSamplePerEpoch[epoch][GlobalManager.Instance.testSample];
+        groundTruthLabel.text = GlobalManager.Instance.groundtruthPerSample[GlobalManager.Instance.testSample];
+    }
+
+    /// <summary>
+    /// Sets the sample to be loaded.
+    /// </summary>
+    /// <param name="value"></param>
+    public void SetSample(float value)
+    {
+        int sample = (int)value;
+        GlobalManager.Instance.SetSample(sample);
+        predictedLabel.text = GlobalManager.Instance.predPerSamplePerEpoch[GlobalManager.Instance.epoch][sample];
+        groundTruthLabel.text = GlobalManager.Instance.groundtruthPerSample[sample];
     }
 
     /// <summary>
@@ -109,6 +123,12 @@ public class GuiManager : MonoBehaviour
     public void SetBWPixels(bool value)
     {
         pixelMaterial.SetInt("_useBlueRedCmap", value ? 0 : 1);
+    }
+
+    public void SetWAMult(bool value)
+    {
+        GlobalManager.Instance.multWeightsByActivations = value;
+        GlobalManager.Instance.UpdateMeshes();
     }
 
     /// <summary>

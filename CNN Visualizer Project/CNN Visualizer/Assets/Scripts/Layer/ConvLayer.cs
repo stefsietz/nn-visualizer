@@ -159,6 +159,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
         List<Vector3> verts = new List<Vector3>();
         List<Color> cols = new List<Color>();
+        List<float> activations = new List<float>();
         List<int> inds = new List<int>();
         List<int> lineInds = new List<int>();
         List<int> polyInds = new List<int>();
@@ -172,10 +173,16 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetMultiDimIndices(activationTensorShape, i);
+                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
-                float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
+                float tensorVal = (float)activationTensor.GetValue(index);
+
+                if (allCalculations > 0)
+                    activations.Add(tensorVal);
+
+                tensorVal *= pointBrightness;
+
                 cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
 
                 //cols.Add(Color.white);
@@ -237,7 +244,11 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
                             int[] index = { kernelInd1, kernelInd2, 0, h };
 
-                            float tensorVal = (float)tensor.GetValue(index) * weightBrightness;
+                            float activationMult = 1f;
+                            if (allCalculations > 0  && GlobalManager.Instance.multWeightsByActivations)
+                                activationMult = activations[j];
+
+                            float tensorVal = (float)tensor.GetValue(index) * weightBrightness * activationMult;
                             cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
                         } else
                         {
@@ -296,16 +307,22 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         {
             edgeBundle = Mathf.Max(0, 1f - level);
             allCalculations = 0;
-        } else if(level <= 2f)
+        }
+        else if (level <= 2f)
         {
             edgeBundle = 0;
-            allCalculations = Mathf.Max(0, (level - 1f));
+            allCalculations = 0;
+        }
+        else if(level > 2f && level <= 3f)
+        {
+            edgeBundle = 0;
+            allCalculations = Mathf.Max(0, (level - 2f));
         }
     }
 
     public void SetWeightTensorForEpoch(Array tensor, int epoch)
     {
-        _weightTensorPerEpoch.Add(epoch, tensor);
+        _weightTensorPerEpoch[epoch] = tensor;
     }
 
     public Array GetWeightTensorForEpoch(int epoch)

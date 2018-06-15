@@ -161,7 +161,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetMultiDimIndices(activationTensorShape, i);
+                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
                 float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
@@ -261,14 +261,19 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         }
         else if (level <= 2f)
         {
-            edgeBundle = 1f - (level - 1f);
-            allCalculations = 1f;
+            edgeBundle = 0;
+            allCalculations = 0;
+        }
+        else if (level > 2f && level <= 3f)
+        {
+            edgeBundle = 0;
+            allCalculations = level - 2f;
         }
     }
 
     public void SetActivationTensorForEpoch(Array tensor, int epoch)
     {
-        _activationTensorPerEpoch.Add(epoch, tensor);
+        _activationTensorPerEpoch[epoch] = tensor;
     }
 
     public Array GetActivationTensorForEpoch(int epoch)

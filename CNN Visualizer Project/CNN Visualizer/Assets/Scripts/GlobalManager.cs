@@ -11,9 +11,15 @@ public class GlobalManager : MonoBehaviour
 
     List<Layer> layers = new List<Layer>();
 
-    public Dictionary<int, string> predPerEpoch = new Dictionary<int, string>();
+    public Dictionary<int, Dictionary<int, string>> predPerSamplePerEpoch = new Dictionary<int, Dictionary<int, string>>();
+    public Dictionary<int, string> groundtruthPerSample = new Dictionary<int, string>();
 
     public List<string> classNames = new List<string>();
+
+    public int testSample = 0;
+    public int epoch = 0;
+
+    public bool multWeightsByActivations = false;
 
     /// <summary>
     /// Return singleton instance
@@ -76,9 +82,19 @@ public class GlobalManager : MonoBehaviour
         }
     }
 
+    public void UpdateMeshes()
+    {
+        List<Layer> layers = GetAllLayersUnOrdered();
+
+        foreach (Layer l in layers)
+        {
+            l.UpdateMesh();
+        }
+    }
 
     public void SetEpoch(int epoch)
     {
+        this.epoch = epoch;
         List<Layer> orderedLayers = GetAllLayersOrdered();
 
         foreach (Layer l in orderedLayers)
@@ -93,6 +109,18 @@ public class GlobalManager : MonoBehaviour
             {
                 ((MaxPoolLayer)l).SetEpoch(epoch);
             }
+        }
+    }
+
+    public void SetSample(float value)
+    {
+        testSample = (int)value;
+
+        List<Layer> orderedLayers = GetAllLayersOrdered();
+
+        foreach (Layer l in orderedLayers)
+        {
+            l.UpdateMesh();
         }
     }
 

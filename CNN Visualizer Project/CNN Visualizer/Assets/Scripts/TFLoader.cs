@@ -24,6 +24,8 @@ public struct LayerData
     public List<Array> weightTensors;
     public int[] activationShape;
     public List<Array> activationTensors;
+    public List<string> groundTruths;
+    public List<List<string>> predictions;
 }
 
 /// <summary>
@@ -34,6 +36,9 @@ public class TFLoader : MonoBehaviour {
     public List<GameObject> prefabs;
 
     public Text classLabel;
+
+    public Slider sampleSlider;
+    public Slider epochSlider;
 
     // Use this for initialization
     void Start () {
@@ -89,60 +94,113 @@ public class TFLoader : MonoBehaviour {
         string path = EditorUtility.OpenFolderPanel("Load json folder", "", "");
         string[] files = Directory.GetFiles(path, "*.json");
 
-        for (int e = 0; e < files.Length; e++)
+        string structureFile = "";
+        List<string> weightFiles = new List<string>();
+        List<string> activationFiles = new List<string>();
+
+        foreach(string file in files)
         {
-            JArray layerArray = JArray.Parse(System.IO.File.ReadAllText(files[e]));
+            if (file.Contains("activation"))
+                activationFiles.Add(file);
+            else if (file.Contains("weights"))
+                weightFiles.Add(file);
+            else if (file.Contains("structure"))
+                structureFile = file;
+        }
 
-            for (int i = 0; i < layerArray.Count-1; i++)
+        JArray layerArray = JArray.Parse(System.IO.File.ReadAllText(structureFile));
+
+        for (int i = 0; i < layerArray.Count - 1; i++)
+        {
+
+            LayerData layerData = new LayerData();
+            layerData.weightTensors = new List<Array>();
+            layerData.activationTensors = new List<Array>();
+            layerData.groundTruths = new List<string>();
+            layerData.predictions = new List<List<string>>();
+            layerDataList.Add(layerData);
+
+            JArray layerContent = (JArray)layerArray[i];
+            JToken name = layerContent.First;
+            JArray weightShape = (JArray) name.Next;
+
+            int weightShapeRank = weightShape.Count;
+            layerData.weightShape = new int[weightShapeRank];
+            SetShape(weightShape, layerData.weightShape);
+
+
+            layerData.name = (string)name;
+            layerData.type = LayerTypeFromName(layerData.name);
+
+            layerDataList[i] = layerData;
+        }
+
+        epochSlider.maxValue = weightFiles.Count-1;
+
+        for (int e = 0; e < weightFiles.Count; e++)
+        {
+
+            JArray weightArray = JArray.Parse(System.IO.File.ReadAllText(weightFiles[e]));
+            JArray activationArray = JArray.Parse(System.IO.File.ReadAllText(activationFiles[e]));
+
+            for (int i = 0; i < weightArray.Count; i++)
             {
-                LayerData layerData;
+                LayerData layerData = layerDataList[i];
 
-                if (layerDataList.Count > i)
-                {
-                    layerData = layerDataList[i];
-                } else
-                {
-                    layerData = new LayerData();
-                    layerData.weightTensors = new List<Array>();
-                    layerData.activationTensors = new List<Array>();
-                    layerDataList.Add(layerData);
-                }
-
-                JArray layerContent = (JArray)layerArray[i];
-                JToken className = layerContent.First;
-                JToken name = className.Next;
+                JArray weightContent = (JArray)weightArray[i];
+                JToken name = weightContent.First;
                 JArray weightShape = (JArray)name.Next;
                 JArray weightTensor = (JArray)weightShape.Next;
-
-                classLabel.text = (string)className;
-                layerData.name = (string)name;
 
                 int weightShapeRank = weightShape.Count;
                 layerData.weightShape = new int[weightShapeRank];
 
                 this.SetShapeAndTensorList(weightShape, weightTensor, layerData.weightShape, layerData.weightTensors);
 
-                JArray activationShape = (JArray)weightTensor.Next;
+                JArray activationContent = (JArray)activationArray[i];
+                name = activationContent.First;
+                JArray activationShape = (JArray)name.Next;
                 JArray activationTensor = (JArray)activationShape.Next;
                 int activationShapeRank = activationShape.Count;
                 layerData.activationShape = new int[activationShapeRank];
 
                 this.SetShapeAndTensorList(activationShape, activationTensor, layerData.activationShape, layerData.activationTensors);
 
-                layerData.type = LayerTypeFromName(layerData.name);
+                sampleSlider.maxValue = layerData.activationShape[0]-1;
 
                 layerDataList[i] = layerData;
             }
 
-            JArray classNames = (JArray)layerArray[layerArray.Count-1];
-            foreach(JToken name in classNames)
+            JArray classes = (JArray)activationArray[activationArray.Count - 1];
+            JArray gt = (JArray)classes.First;
+            JArray pred = (JArray)gt.Next;
+
+            if (!GlobalManager.Instance.predPerSamplePerEpoch.ContainsKey(e))
             {
-                string className = (string)name;
-                GlobalManager.Instance.classNames.Add(className);
+                GlobalManager.Instance.predPerSamplePerEpoch[e] = new Dictionary<int, string>();
+            }
+
+            for (int j = 0; j < gt.Count; j++)
+            {
+                string gt_class = (string)gt[j];
+                string pred_class = (string)pred[j];
+
+                GlobalManager.Instance.predPerSamplePerEpoch[e][j] = pred_class;
+                GlobalManager.Instance.groundtruthPerSample[j] = gt_class;
             }
         }
 
         return layerDataList;
+    }
+
+    private void SetShape(JArray shape, int[] targetShape)
+    {
+        int rank = shape.Count;
+
+        for (int j = 0; j < rank; j++)
+        {
+            targetShape[j] = (int)shape[j];
+        }
     }
 
     /// <summary>
@@ -227,10 +285,10 @@ public class TFLoader : MonoBehaviour {
                     GameObject go = GetImageLayerPrefab();
                     GameObject inst = Instantiate(go);
                     ImageLayer imLayer = inst.GetComponent<ImageLayer>();
-                    imLayer.reducedResolution = new Vector2Int(l.weightShape[1], l.weightShape[2]);
-                    imLayer.fullResolution = new Vector2Int(l.weightShape[1], l.weightShape[2]);
+                    imLayer.reducedResolution = new Vector2Int(l.activationShape[1], l.activationShape[2]);
+                    imLayer.fullResolution = new Vector2Int(l.activationShape[1], l.activationShape[2]);
                     imLayer.pixelSpacing = 0.025f;
-                    imLayer.depth = l.weightShape[3];
+                    imLayer.depth = l.activationShape[3];
 
                     GameObject canvas = GameObject.FindGameObjectWithTag("Canvas");
                     Material pixelMaterial = canvas.GetComponent<GuiManager>().pixelMaterial;
@@ -326,27 +384,6 @@ public class TFLoader : MonoBehaviour {
                     for (int i = 0; i < l.activationTensors.Count; i++)
                     {
                         fcLayer.SetActivationTensorForEpoch(l.activationTensors[i], i);
-
-                        if (l.name.Contains("out")){;
-
-                            Array tensor = l.activationTensors[i];
-                            float maxFloat = 0;
-                            int maxIndex = 0;
-
-                            for(int j = 0; j<tensor.Length; j++)
-                            {
-                                int[] index = { 0, j };
-                                float tensorVal = (float)tensor.GetValue(index);
-                                if(tensorVal > maxFloat)
-                                {
-                                    maxFloat = tensorVal;
-                                    maxIndex = j;
-                                }
-                            }
-
-                            GlobalManager.Instance.predPerEpoch[i] = GlobalManager.Instance.classNames[maxIndex];
-                        }
-
 
                     }
                     return inst;

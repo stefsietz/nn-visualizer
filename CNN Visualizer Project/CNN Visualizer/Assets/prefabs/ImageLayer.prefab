@@ -101,6 +101,7 @@ MonoBehaviour:
   stride: {x: 1, y: 1}
   padding: 1
   pointBrightness: 1
+  weightBrightness: 1
   zOffset: 1
   epoch: 0
   showOriginalDepth: 0

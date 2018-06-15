@@ -79,8 +79,6 @@ USAGE
                       dense_layer_units=int(args.dense_layer_units),
                       dropout=args.dropout
                       )
-
-    args.dataset = ''
     x, y, x_test, y_test, width, _ = load_dataset(args.dataset)
 
     x_inference = tf.placeholder(tf.uint8, [None, width, width, 1], name="X")

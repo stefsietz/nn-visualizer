@@ -26,4 +26,26 @@ class Util
         }
         return index;
     }
+
+    public static int[] GetSampleMultiDimIndices(int[] shape, int singleDimInd, int sample)
+    {
+        int rank = shape.Length;
+        int[] index = new int[shape.Length];
+
+        int div = singleDimInd;
+        for (int j = 0; j < rank; j++)
+        {
+            int dim = shape[j];
+            if (j == 0)
+                dim = 1;
+
+            int oldDiv = div;
+            div = div / dim;
+            index[j] = oldDiv - div * dim;
+
+            if (j == 0)
+                index[j] = sample;
+        }
+        return index;
+    }
 }

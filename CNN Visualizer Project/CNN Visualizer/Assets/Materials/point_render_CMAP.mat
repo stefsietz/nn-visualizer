@@ -74,9 +74,9 @@ Material:
     - _ZWrite: 1
     - _npts: 20
     - _pow: 2.16
-    - _squarePixels: 1
+    - _squarePixels: 0
     - _totalVerts: 363
-    - _useBlueRedCmap: 0
+    - _useBlueRedCmap: 1
     - _width: 0.05
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

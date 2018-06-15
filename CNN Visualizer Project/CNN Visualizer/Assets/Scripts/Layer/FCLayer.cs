@@ -132,6 +132,7 @@ public class FCLayer : InputAcceptingLayer
         //POINTS
         List<Vector3> verts = new List<Vector3>();
         List<Color> cols = new List<Color>();
+        List<float> activations = new List<float>();
         List<int> inds = new List<int>();
 
         Vector3 posDiff = new Vector3(0, 0, -zOffset);
@@ -143,10 +144,17 @@ public class FCLayer : InputAcceptingLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetMultiDimIndices(activationTensorShape, i);
+                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
-                float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
+
+                float tensorVal = (float)activationTensor.GetValue(index);
+
+                if (GlobalManager.Instance.multWeightsByActivations)
+                    activations.Add(tensorVal);
+
+                tensorVal *= pointBrightness;
+
                 cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
 
                 //cols.Add(Color.white);
@@ -248,7 +256,11 @@ public class FCLayer : InputAcceptingLayer
                                     index[0] = j;
                                 }
 
-                                float tensorVal = (float)tensor.GetValue(index) * weightBrightness;
+                                float activationMult = 1f;
+                                if (GlobalManager.Instance.multWeightsByActivations)
+                                    activationMult = activations[j];
+
+                                float tensorVal = (float)tensor.GetValue(index) * weightBrightness * activationMult;
                                 cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
                             }
                             else
@@ -430,12 +442,16 @@ public class FCLayer : InputAcceptingLayer
         {
             edgeBundle = 0;
             collapseInput = 1f - (level - 1f);
+        } else
+        {
+            edgeBundle = 0;
+            collapseInput = 0;
         }
     }
 
     public void SetTensorForEpoch(Array tensor, int epoch)
     {
-        _tensorPerEpoch.Add(epoch, tensor);
+        _tensorPerEpoch[epoch] = tensor;
     }
 
     public Array GetTensorForEpoch(int epoch)
@@ -455,7 +471,7 @@ public class FCLayer : InputAcceptingLayer
 
     public void SetActivationTensorForEpoch(Array tensor, int epoch)
     {
-        _activationTensorPerEpoch.Add(epoch, tensor);
+        _activationTensorPerEpoch[epoch] = tensor;
     }
 
     public Array GetActivationTensorForEpoch(int epoch)
