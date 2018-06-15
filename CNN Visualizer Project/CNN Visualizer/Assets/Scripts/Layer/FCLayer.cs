@@ -150,8 +150,7 @@ public class FCLayer : InputAcceptingLayer
 
                 float tensorVal = (float)activationTensor.GetValue(index);
 
-                if (GlobalManager.Instance.multWeightsByActivations)
-                    activations.Add(tensorVal);
+                activations.Add(tensorVal);
 
                 tensorVal *= pointBrightness;
 

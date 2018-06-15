@@ -2,9 +2,9 @@
 *.pdf
 *.psd
 abgabe/
-**cifar10/jsons/*
-cifar10/summaries/**
-cifar10/MNIST**
+**/jsons/*
+**/summaries/**
+**/MNIST**
 abgabe.zip
 doctest
 html/
