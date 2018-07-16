@@ -86,6 +86,55 @@ public class FeatureMap
         }
     }
 
+    public List<Shape> GetFilterGrids(Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    {
+        if(convLocation == -1)
+        {
+            return GetFilterGrids(outputShape, theoreticalOutputShape, stride, allCalcs);
+        }
+
+        //check if requested outputshape is same as existing, reinit allcalgrids if not
+        if (outputShape != this.outputShape
+            || stride != this.stride
+            || this.theoreticalOutputShape != theoreticalOutputShape
+            && outputShape != new Vector2Int(0, 0))
+        {
+            this.outputShape = outputShape;
+            this.theoreticalOutputShape = theoreticalOutputShape;
+            this.outputPosition = position + GetOutputGridOffset(theoreticalOutputShape, outputShape);
+            this.stride = stride;
+            InitGrids();
+        }
+
+        if (allCalcs == 0)
+        {
+            List<Shape> filterGrids = new List<Shape>();
+            GridShape gr = (GridShape)_allCalcFilterGrids[convLocation].Clone();
+            gr.spacing /= (shape.x - 1) / (float)(filterShape.x - 1);
+
+            GridShape gr2 = (GridShape)_allCalcFilterGrids[convLocation].Clone();
+            gr2.spacing /= (shape.x - 1) / (float)(filterShape.x - 1);
+
+            filterGrids.Add(gr2); 
+            return filterGrids;
+        }
+        else
+        {
+            List<Shape> filterGrids = new List<Shape>();
+            foreach (GridShape gr in _allCalcFilterGrids)
+            {
+
+                gr.spacing /= (shape.x - 1) / (float)(filterShape.x - 1);
+
+                GridShape gr2 = (GridShape)_allCalcFilterGrids[convLocation].Clone();
+
+                GridShape interpolated = gr.InterpolatedGrid(gr2, 1.0f - allCalcs);
+                filterGrids.Add(interpolated);
+            }
+            return filterGrids;
+        }
+    }
+
 
     private Vector3 GetOutputGridOffset(Vector2 theoreticalOutputShape, Vector2Int outputShape)
     {

@@ -13,6 +13,11 @@ public class CircleShape : Shape
         initVerts();
     }
 
+    public override object Clone()
+    {
+        return new CircleShape(this.position, this.resolution, this.spacing);
+    }
+
 
     private void initVerts()
     {

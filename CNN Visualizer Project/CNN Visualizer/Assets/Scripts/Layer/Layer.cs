@@ -248,4 +248,9 @@ public abstract class Layer : MonoBehaviour
     {
         return _initialized;
     }
+
+    public virtual List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    {
+        return GetLineStartShapes(convShape, outputShape, theoreticalOutputShape, stride, allCalcs);
+    }
 }

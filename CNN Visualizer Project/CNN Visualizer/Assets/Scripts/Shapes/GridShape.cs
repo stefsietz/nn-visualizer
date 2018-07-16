@@ -13,6 +13,11 @@ public class GridShape : Shape
         initVerts();
     }
 
+    public override object Clone()
+    {
+        return new GridShape(this.position, this.resolution, this.spacing);
+    }
+
     public GridShape InterpolatedGrid(GridShape target, float alpha)
     {
         if(this.resolution != target.resolution)

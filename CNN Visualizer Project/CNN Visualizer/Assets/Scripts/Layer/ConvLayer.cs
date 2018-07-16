@@ -24,6 +24,9 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     [Range(0.0f, 1.0f)]
     public float allFiltersSpacing = 0.5f;
 
+    [Range(-1, 128)]
+    public int convLocation = 0;
+
     public float fullResHeight = 5.0f;
 
     public float nodeSize;
@@ -146,6 +149,19 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         return filterGrids;
     }
 
+    public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    {
+        currentConvShape = convShape;
+        UpdateFeatureMaps();
+
+        List<List<Shape>> filterGrids = new List<List<Shape>>();
+        for (int i = 0; i < _featureMaps.Count; i++)
+        {
+            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputShape, theoreticalOutputShape, stride, allCalcs, convLocation));
+        }
+        return filterGrids;
+    }
+
     override public void CalcMesh()
     {
         Debug.Log(name);
@@ -195,6 +211,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
 
         List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations);
+        inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations, this.convLocation);
 
         //TODO: reuse generated vert positions
 

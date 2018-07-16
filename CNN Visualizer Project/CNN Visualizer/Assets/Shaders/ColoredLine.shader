@@ -20,6 +20,8 @@
 		//ZTest Always
 		//Blend SrcAlpha OneMinusSrcAlpha
 
+			Cull Off
+
 
 		Pass
 		{

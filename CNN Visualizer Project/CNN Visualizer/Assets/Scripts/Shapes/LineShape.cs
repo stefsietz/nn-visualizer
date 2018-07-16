@@ -13,6 +13,11 @@ public class LineShape : Shape
         initVerts();
     }
 
+    public override object Clone()
+    {
+        return new LineShape(this.position, this.resolution, this.spacing);
+    }
+
 
     private void initVerts()
     {

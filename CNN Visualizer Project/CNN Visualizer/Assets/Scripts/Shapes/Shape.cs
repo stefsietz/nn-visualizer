@@ -6,7 +6,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Base class for various Shape Subclasses that are used for calculating vertex positions based on a center position and size.
 /// </summary>
-public abstract class Shape
+public abstract class Shape : ICloneable
 {
     public Vector3 position { get; set; }
     protected Vector3[] _verts;
@@ -15,6 +15,11 @@ public abstract class Shape
 	{
         this.position = position;
 	}
+
+    public virtual object Clone()
+    {
+        return null;
+    }
 
     /// <summary>
     /// Return vertices of this shape. If update parameter is false, stored vertices are returned, else they are recalculated.

@@ -115,5 +115,6 @@ MonoBehaviour:
   lineXToZ: 0
   fullDepth: 64
   allFiltersSpacing: 0.214
+  convLocation: 0
   fullResHeight: 5
   nodeSize: 0
