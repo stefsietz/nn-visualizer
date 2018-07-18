@@ -24,7 +24,7 @@ public class GuiManager : MonoBehaviour
 
     public Material pixelMaterial;
 
-    private int epoch = 0;
+    private int _epoch = 0;
 
     // Use this for initialization
     void Start()
@@ -60,9 +60,9 @@ public class GuiManager : MonoBehaviour
     /// <param name="value"></param>
     public void SetEpoch(float value)
     {
-        epoch = (int)value;
-        GlobalManager.Instance.SetEpoch(epoch);
-        predictedLabel.text = GlobalManager.Instance.predPerSamplePerEpoch[epoch][GlobalManager.Instance.testSample];
+        _epoch = (int)value;
+        GlobalManager.Instance.SetEpoch(_epoch);
+        predictedLabel.text = GlobalManager.Instance.predPerSamplePerEpoch[_epoch][GlobalManager.Instance.testSample];
         groundTruthLabel.text = GlobalManager.Instance.groundtruthPerSample[GlobalManager.Instance.testSample];
     }
 

@@ -11,6 +11,8 @@ public abstract class Shape : ICloneable
     public Vector3 position { get; set; }
     protected Vector3[] _verts;
 
+    protected abstract void InitVerts();
+
     public Shape(Vector3 position)
 	{
         this.position = position;
@@ -28,7 +30,7 @@ public abstract class Shape : ICloneable
     /// <returns></returns>
     public Vector3[] GetVertices(bool update)
     {
-        if (update) calcVertices();
+        if (update) CalcVertices();
 
         return _verts;
     }
@@ -36,13 +38,13 @@ public abstract class Shape : ICloneable
     /// <summary>
     /// returns 3d Vectors that can be added to the mesh.
     /// </summary>
-    protected abstract void calcVertices();
+    protected abstract void CalcVertices();
 
     /// <summary>
     /// calculate the bounding box of this shape
     /// </summary>
     /// <returns></returns>
-    public abstract float[] Bbox();
+    public abstract float[] GetBbox();
 
     /// <summary>
     /// Interpolate 2 Shapes with different parameters and return their vertices.

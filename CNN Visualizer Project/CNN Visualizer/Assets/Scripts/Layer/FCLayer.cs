@@ -9,9 +9,9 @@ using System;
 public class FCLayer : InputAcceptingLayer
 {
     public int fullDepth = 1024;
-    private int oldFullDepth;
+    private int _oldFullDepth;
 
-    private Vector3Int inputResolution;
+    private Vector3Int _inputResolution;
 
     [Range(0.0f, 1.0f)]
     public float collapseInput;
@@ -21,10 +21,10 @@ public class FCLayer : InputAcceptingLayer
     private List<Vector3> _nodePositions;
 
     private Dictionary<int, Array> _tensorPerEpoch = new Dictionary<int, Array>();
-    private int[] tensorShape = new int[4];
+    private int[] _tensorShape = new int[4];
 
     private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] activationTensorShape = new int[4];
+    private int[] _activationTensorShape = new int[4];
 
     public FCLayer()
     {
@@ -38,21 +38,21 @@ public class FCLayer : InputAcceptingLayer
     {
         base.UpdateForChangedParams();
 
-        Vector3Int newRes = inputResolution;
+        Vector3Int newRes = _inputResolution;
         if (_inputLayer) {
             newRes = _inputLayer.GetOutputShape();
         }
 
-        if(reducedDepth != oldReducedDepth ||
-            newRes != inputResolution ||
+        if(reducedDepth != _oldReducedDepth ||
+            newRes != _inputResolution ||
             IsInitialized() == false ||
             _nodePositions == null ||
-            oldFullDepth != fullDepth)
+            _oldFullDepth != fullDepth)
         {
-            inputResolution = newRes;
+            _inputResolution = newRes;
             InitNodes();
-            oldReducedDepth = reducedDepth;
-            oldFullDepth = fullDepth;
+            _oldReducedDepth = reducedDepth;
+            _oldFullDepth = fullDepth;
         }
     }
 
@@ -120,7 +120,7 @@ public class FCLayer : InputAcceptingLayer
 
     override public void CalcMesh()
     {
-        if(_input == null)
+        if(input == null)
         {
             base.CalcMesh();
             return;
@@ -144,7 +144,7 @@ public class FCLayer : InputAcceptingLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
+                int[] index = Util.GetSampleMultiDimIndices(_activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
 
@@ -460,12 +460,12 @@ public class FCLayer : InputAcceptingLayer
 
     public void SetTensorShape(int[] tensorShape)
     {
-        this.tensorShape = tensorShape;
+        this._tensorShape = tensorShape;
     }
 
     public int[] GetTensorShape()
     {
-        return tensorShape;
+        return _tensorShape;
     }
 
     public void SetActivationTensorForEpoch(Array tensor, int epoch)
@@ -480,11 +480,11 @@ public class FCLayer : InputAcceptingLayer
 
     public void SetActivationTensorShape(int[] tensorShape)
     {
-        this.activationTensorShape = tensorShape;
+        this._activationTensorShape = tensorShape;
     }
 
     public int[] GetActivationTensorShape()
     {
-        return activationTensorShape;
+        return _activationTensorShape;
     }
 }

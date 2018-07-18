@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c3724587841858468a67a3b273cd302, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  reducedShape: {x: 3, y: 3}
+  convShape: {x: 3, y: 3}
   stride: {x: 1, y: 1}
   padding: 1
   pointBrightness: 4
@@ -105,7 +105,7 @@ MonoBehaviour:
   zOffset: 1
   epoch: 0
   showOriginalDepth: 0
-  _input: {fileID: 0}
+  input: {fileID: 0}
   reducedDepth: 4
   filterSpread: 1
   filterSpacing: 0.05

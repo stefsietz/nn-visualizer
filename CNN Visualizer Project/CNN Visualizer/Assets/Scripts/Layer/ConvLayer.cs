@@ -8,18 +8,24 @@ using System;
 /// </summary>
 public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 {
-    private Vector2Int oldReducedShape;
-    private Vector2Int oldStride;
+    private Vector2Int _oldConvShape;
+    private Vector2Int _oldStride;
 
     public int fullDepth = 64;
-    private int oldFullDepth;
+    private int _oldFullDepth;
 
-    private bool oldPadding;
+    private bool _oldPadding;
 
-    private Vector2Int featureMapResolution;
-    private Vector2 featureMapTheoreticalResolution;
+    /// <summary>
+    /// feature map always refers to the layers' output
+    /// </summary>
+    private Vector2Int _featureMapResolution;
+    /// <summary>
+    /// feature map always refers to the layers' output
+    /// </summary>
+    private Vector2 _featureMapTheoreticalResolution;
 
-    private Vector2Int currentConvShape = new Vector2Int(1, 1);
+    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
 
     [Range(0.0f, 1.0f)]
     public float allFiltersSpacing = 0.5f;
@@ -34,15 +40,15 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     private List<FeatureMap> _featureMaps;
 
     private Dictionary<int, Array> _weightTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] weightTensorShape = new int[4];
+    private int[] _weightTensorShape = new int[4];
 
     private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] activationTensorShape = new int[4];
+    private int[] _activationTensorShape = new int[4];
 
     public ConvLayer()
     {
-        reducedShape = new Vector2Int(3, 3);
-        oldPadding = padding;
+        convShape = new Vector2Int(3, 3);
+        _oldPadding = padding;
     }
 
     /// <summary>
@@ -52,27 +58,27 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     {
         base.UpdateForChangedParams();
 
-        Vector2Int newRes = featureMapResolution;
+        Vector2Int newRes = _featureMapResolution;
         if (_inputLayer) {
-            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), reducedShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
-            featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), reducedShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+            _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
         }
 
-        if(reducedDepth != oldReducedDepth ||
-            reducedShape != oldReducedShape ||
-            newRes != featureMapResolution ||
-            stride != oldStride ||
-            padding != oldPadding ||
+        if(reducedDepth != _oldReducedDepth ||
+            convShape != _oldConvShape ||
+            newRes != _featureMapResolution ||
+            stride != _oldStride ||
+            padding != _oldPadding ||
             IsInitialized() == false ||
             _featureMaps == null)
         {
-            featureMapResolution = newRes;
+            _featureMapResolution = newRes;
 
             InitFeatureMaps();
-            oldReducedShape = reducedShape;
-            oldReducedDepth = reducedDepth;
-            oldStride = stride;
-            oldPadding = padding;
+            _oldConvShape = convShape;
+            _oldReducedDepth = reducedDepth;
+            _oldStride = stride;
+            _oldPadding = padding;
         }
     }
 
@@ -128,17 +134,17 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     }
 
     /// <summary>
-    /// Calculates and returns the positions of the line start points (for the CalcMesh() function)
+    /// Calculates and returns the positions of the line start points (for the CalcMesh() function). Gets Called by a Layer that is connected to this Layers output.
     /// </summary>
-    /// <param name="convShape"></param>
-    /// <param name="outputShape"></param>
+    /// <param name="convShape">Shape of the Conv operation of the next Layer</param>
+    /// <param name="outputShape">Output Shape</param>
     /// <param name="theoreticalOutputShape"></param>
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
     public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
     {
-        currentConvShape = convShape;
+        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();
@@ -151,7 +157,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
     {
-        currentConvShape = convShape;
+        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();
@@ -165,7 +171,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     override public void CalcMesh()
     {
         Debug.Log(name);
-        if(_input == null)
+        if(input == null)
         {
             base.CalcMesh();
             return;
@@ -189,7 +195,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
+                int[] index = Util.GetSampleMultiDimIndices(_activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
                 float tensorVal = (float)activationTensor.GetValue(index);
@@ -210,8 +216,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         }
 
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations);
-        inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations, this.convLocation);
+        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations);
+        inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations, this.convLocation);
 
         //TODO: reuse generated vert positions
 
@@ -256,8 +262,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
                         if (_weightTensorPerEpoch.ContainsKey(epoch)){
                             Array tensor = _weightTensorPerEpoch[epoch];
-                            int kernelInd1 = k % reducedShape.x;
-                            int kernelInd2 = k / reducedShape.y;
+                            int kernelInd1 = k % convShape.x;
+                            int kernelInd2 = k / convShape.y;
 
                             int[] index = { kernelInd1, kernelInd2, 0, h };
 
@@ -310,12 +316,12 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public override Vector3Int GetOutputShape()
     {
-        return new Vector3Int(featureMapResolution.x, featureMapResolution.y, reducedDepth);
+        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, reducedDepth);
     }
 
     public override Vector2Int Get2DOutputShape()
     {
-        return featureMapResolution;
+        return _featureMapResolution;
     }
 
     public override void SetExpansionLevel(float level)
@@ -349,12 +355,12 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public void SetWeightTensorShape(int[] tensorShape)
     {
-        this.weightTensorShape = tensorShape;
+        this._weightTensorShape = tensorShape;
     }
 
     public int[] GetWeightTensorShape()
     {
-        return weightTensorShape;
+        return _weightTensorShape;
     }
 
     public void SetActivationTensorForEpoch(Array tensor, int epoch)
@@ -369,12 +375,12 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public void SetActivationTensorShape(int[] tensorShape)
     {
-        this.activationTensorShape = tensorShape;
+        this._activationTensorShape = tensorShape;
     }
 
     public int[] GetActivationTensorShape()
     {
-        return activationTensorShape;
+        return _activationTensorShape;
     }
 
     public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)
@@ -382,8 +388,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInfo info = new FeatureMapInfo();
         info.position = filterPositions[featureMapIndex];
-        info.shape = featureMapResolution;
-        info.filterShape = currentConvShape;
+        info.shape = _featureMapResolution;
+        info.convShape = _currentConvShape;
         info.outputShape = Get2DOutputShape();
         info.spacing = filterSpacing;
         return info;

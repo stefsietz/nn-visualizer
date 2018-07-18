@@ -10,7 +10,7 @@ public class CircleShape : Shape
         this.resolution = resolution;
         this.spacing = spacing;
 
-        initVerts();
+        InitVerts();
     }
 
     public override object Clone()
@@ -19,17 +19,17 @@ public class CircleShape : Shape
     }
 
 
-    private void initVerts()
+    protected override void InitVerts()
     {
         _verts = new Vector3[resolution];
         for (int i=0; i<_verts.Length; i++)
         {
             _verts[i] = new Vector3(0, 0, 0);
         }
-        calcVertices();
+        CalcVertices();
     }
 
-    protected override void calcVertices()
+    protected override void CalcVertices()
     {
         for (int i = 0; i < resolution; i++)
         {
@@ -40,7 +40,7 @@ public class CircleShape : Shape
         }
     }
 
-    public override float[] Bbox()
+    public override float[] GetBbox()
     {
         float[] o = { position.x - spacing, position.y - spacing, position.x + spacing, position.y + spacing };
 

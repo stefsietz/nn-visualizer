@@ -6,15 +6,15 @@ using System;
 public class ImageLayer : Layer, I2DMapLayer
 {
     public Vector2Int fullResolution = new Vector2Int(224, 224);
-    private Vector2Int oldFullResolution;
+    private Vector2Int _oldFullResolution;
 
     public int depth = 3;
-    private int oldDepth;
+    private int _oldDepth;
 
     public Vector2Int reducedResolution = new Vector2Int(11, 11);
-    private Vector2Int oldreducedResolution;
+    private Vector2Int _oldreducedResolution;
 
-    private Vector2Int currentConvShape = new Vector2Int(1, 1);
+    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
 
     [Range(0.0f, 1.0f)]
     public float spread = 1.0f;
@@ -35,10 +35,10 @@ public class ImageLayer : Layer, I2DMapLayer
 
     private List<FeatureMap> _featureMaps;
 
-    private GridShape fullResGrid;
+    private GridShape _fullResGrid;
 
     private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] activationTensorShape = new int[4];
+    private int[] _activationTensorShape = new int[4];
 
     public ImageLayer()
     {
@@ -48,24 +48,24 @@ public class ImageLayer : Layer, I2DMapLayer
     {
         base.UpdateForChangedParams();
 
-        if (depth != oldDepth ||
-            reducedResolution != oldreducedResolution
-            || oldFullResolution != fullResolution
+        if (depth != _oldDepth ||
+            reducedResolution != _oldreducedResolution
+            || _oldFullResolution != fullResolution
             || IsInitialized() == false
             || _featureMaps == null)
         {
             InitFeatureMaps();
-            oldreducedResolution = reducedResolution;
-            oldFullResolution = fullResolution;
-            oldDepth = depth;
+            _oldreducedResolution = reducedResolution;
+            _oldFullResolution = fullResolution;
+            _oldDepth = depth;
         }
 
-        if (fullResGrid == null)
-            fullResGrid = new GridShape(new Vector3(0, 0, this.ZPosition() - fullresOffset), fullResolution, new Vector2(pixelSpacing, pixelSpacing));
+        if (_fullResGrid == null)
+            _fullResGrid = new GridShape(new Vector3(0, 0, this.ZPosition() - fullresOffset), fullResolution, new Vector2(pixelSpacing, pixelSpacing));
 
-        fullResGrid.position = new Vector3(0, 0, -fullresOffset);
-        fullResGrid.spacing = new Vector2(pixelSpacing, pixelSpacing);
-        fullResGrid.resolution = fullResolution;
+        _fullResGrid.position = new Vector3(0, 0, -fullresOffset);
+        _fullResGrid.spacing = new Vector2(pixelSpacing, pixelSpacing);
+        _fullResGrid.resolution = fullResolution;
     }
 
     private void InitFeatureMaps()
@@ -129,7 +129,7 @@ public class ImageLayer : Layer, I2DMapLayer
                 if (_activationTensorPerEpoch.ContainsKey(epoch))
                 {
 
-                    int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
+                    int[] index = Util.GetSampleMultiDimIndices(_activationTensorShape, i, GlobalManager.Instance.testSample);
 
                     Array activationTensor = _activationTensorPerEpoch[epoch];
                     float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
@@ -158,7 +158,7 @@ public class ImageLayer : Layer, I2DMapLayer
 
         if (showOriginalResolution)
         {
-            Vector3[] v = fullResGrid.GetVertices(true);
+            Vector3[] v = _fullResGrid.GetVertices(true);
 
             verts.AddRange(v);
             for (int i = 0; i < v.Length; i++)
@@ -167,7 +167,7 @@ public class ImageLayer : Layer, I2DMapLayer
             }
 
             GridShape centerGrid = _featureMaps[_featureMaps.Count / 2].GetPixelGrid();
-            float[] bbox = centerGrid.Bbox();
+            float[] bbox = centerGrid.GetBbox();
 
             float[] zpos = { 0, -fullresOffset };
 
@@ -236,7 +236,7 @@ public class ImageLayer : Layer, I2DMapLayer
 
     public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
     {
-        currentConvShape = convShape;
+        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();
@@ -269,12 +269,12 @@ public class ImageLayer : Layer, I2DMapLayer
 
     public void SetActivationTensorShape(int[] tensorShape)
     {
-        this.activationTensorShape = tensorShape;
+        this._activationTensorShape = tensorShape;
     }
 
     public int[] GetActivationTensorShape()
     {
-        return activationTensorShape;
+        return _activationTensorShape;
     }
 
     public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)
@@ -283,7 +283,7 @@ public class ImageLayer : Layer, I2DMapLayer
         FeatureMapInfo info = new FeatureMapInfo();
         info.position = filterPositions[featureMapIndex];
         info.shape = reducedResolution;
-        info.filterShape = currentConvShape;
+        info.convShape = _currentConvShape;
         info.outputShape = Get2DOutputShape();
         info.spacing = pixelSpacing;
         return info;

@@ -311,10 +311,10 @@ public class TFLoader : MonoBehaviour {
                     GameObject go = GetConvLayerPrefab();
                     GameObject inst = Instantiate(go);
                     ConvLayer convLayer = inst.GetComponent<ConvLayer>();
-                    convLayer.reducedShape = new Vector2Int(l.weightShape[0], l.weightShape[1]);
+                    convLayer.convShape = new Vector2Int(l.weightShape[0], l.weightShape[1]);
                     convLayer.reducedDepth = l.weightShape[3];
                     convLayer.fullDepth = l.weightShape[3];
-                    convLayer._input = input;
+                    convLayer.input = input;
                     convLayer.filterSpread = 1.0f;
                     convLayer.lineCircleGrid = 2.0f;
                     convLayer.filterSpacing = 0.025f;
@@ -340,7 +340,7 @@ public class TFLoader : MonoBehaviour {
                     MaxPoolLayer mpLayer = inst.GetComponent<MaxPoolLayer>();
                     mpLayer.filterSpacing = 0.025f;
                     mpLayer.zOffset = 0.25f;
-                    mpLayer._input = input;
+                    mpLayer.input = input;
 
                     mpLayer.SetActivationTensorShape(l.activationShape);
                     for (int i = 0; i < l.activationTensors.Count; i++)
@@ -355,7 +355,7 @@ public class TFLoader : MonoBehaviour {
                     GameObject go = GetFCLayerPrefab();
                     GameObject inst = Instantiate(go);
                     FCLayer fcLayer = inst.GetComponent<FCLayer>();
-                    fcLayer._input = input;
+                    fcLayer.input = input;
                     fcLayer.filterSpacing = 0.025f;
                     fcLayer.reducedDepth = l.weightShape[1];
                     fcLayer.fullDepth = l.weightShape[1];

@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e4841c31ac57204ba3cf1d3567bb4f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  reducedShape: {x: 0, y: 0}
+  convShape: {x: 0, y: 0}
   stride: {x: 1, y: 1}
   padding: 1
   pointBrightness: 1

@@ -10,7 +10,7 @@ public class GridShape : Shape
         this.resolution = resolution;
         this.spacing = spacing;
 
-        initVerts();
+        InitVerts();
     }
 
     public override object Clone()
@@ -30,17 +30,17 @@ public class GridShape : Shape
         return new GridShape(pos, this.resolution, spacing);
     }
 
-    private void initVerts()
+    protected override void InitVerts()
     {
         _verts = new Vector3[resolution.x * resolution.y];
         for (int i=0; i<_verts.Length; i++)
         {
             _verts[i] = new Vector3(0, 0, 0);
         }
-        calcVertices();
+        CalcVertices();
     }
 
-    protected override void calcVertices()
+    protected override void CalcVertices()
     {
         for (int i = 0; i < resolution.x; i++)
         {
@@ -55,7 +55,7 @@ public class GridShape : Shape
         }
     }
 
-    public override float[] Bbox()
+    public override float[] GetBbox()
     {
         Vector2 offset = new Vector2((resolution.x - 1) * spacing.x / 2, (resolution.y - 1) * spacing.y / 2);
 
@@ -66,7 +66,7 @@ public class GridShape : Shape
 
     public Vector3[] BboxV(float zpos)
     {
-        float[] bbox = Bbox();
+        float[] bbox = GetBbox();
         Vector3 p1 = new Vector3(bbox[0], bbox[1], position.z + zpos);
         Vector3 p2 = new Vector3(bbox[2], bbox[1], position.z + zpos);
         Vector3 p3 = new Vector3(bbox[2], bbox[3], position.z + zpos);

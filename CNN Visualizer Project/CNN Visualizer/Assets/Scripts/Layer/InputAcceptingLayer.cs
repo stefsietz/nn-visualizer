@@ -9,10 +9,10 @@ using System.Collections;
 
 public abstract class InputAcceptingLayer : Layer
 {
-    public GameObject _input;
+    public GameObject input;
 
     public int reducedDepth = 4;
-    protected int oldReducedDepth;
+    protected int _oldReducedDepth;
 
     [Range(0.0f, 1.0f)]
     public float filterSpread;
@@ -42,9 +42,9 @@ public abstract class InputAcceptingLayer : Layer
 
     protected void CheckAndHandleInputChange()
     {
-        if (_input != null)
+        if (input != null)
         {
-            Layer newInputLayer = _input.GetComponent<Layer>();
+            Layer newInputLayer = input.GetComponent<Layer>();
             if (!newInputLayer.IsInitialized())
             {
                 newInputLayer.Init();

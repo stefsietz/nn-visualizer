@@ -12,7 +12,7 @@ using System.Collections.Generic;
 /// Base class for the layer component
 public abstract class Layer : MonoBehaviour
 {
-    public Vector2Int reducedShape;
+    public Vector2Int convShape;
     public Vector2Int stride = new Vector2Int(1, 1);
     public bool padding = true;
 
@@ -31,9 +31,9 @@ public abstract class Layer : MonoBehaviour
 
     private bool _initialized = false;
 
-    private List<Layer> observers = new List<Layer>();
+    private List<Layer> _observers = new List<Layer>();
 
-    protected bool renderColored = false;
+    protected bool _renderColored = false;
 
     public int epoch = 0;
 
@@ -119,7 +119,7 @@ public abstract class Layer : MonoBehaviour
     /// <returns></returns>
     public Vector2Int GetPadding()
     {
-        return Vector2Int.FloorToInt(reducedShape / new Vector2(2, 2));
+        return Vector2Int.FloorToInt(convShape / new Vector2(2, 2));
     }
 
     /// <summary>
@@ -189,9 +189,9 @@ public abstract class Layer : MonoBehaviour
     /// <param name="observer"></param>
     public void AddObserver(Layer observer)
     {
-        if(! observers.Contains(observer))
+        if(! _observers.Contains(observer))
         {
-            observers.Add(observer);
+            _observers.Add(observer);
         }
     }
 
@@ -201,9 +201,9 @@ public abstract class Layer : MonoBehaviour
     /// <param name="observer"></param>
     public void RemoveObserver(Layer observer)
     {
-        if (observers.Contains(observer))
+        if (_observers.Contains(observer))
         {
-            observers.Remove(observer);
+            _observers.Remove(observer);
         }
     }
 
@@ -212,7 +212,7 @@ public abstract class Layer : MonoBehaviour
     /// </summary>
     public void NotifyObservers()
     {
-        foreach(Layer observer in observers)
+        foreach(Layer observer in _observers)
         {
             if (observer != null)
             {

@@ -5,19 +5,19 @@ using System;
 
 public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 {
-    private Vector2Int oldStride;
+    private Vector2Int _oldStride;
 
-    private Vector2Int featureMapResolution;
-    private Vector2 featureMapTheoreticalResolution;
+    private Vector2Int _featureMapResolution;
+    private Vector2 _featureMapTheoreticalResolution;
 
-    private Vector2Int currentConvShape = new Vector2Int(1, 1);
+    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
 
     public float nodeSize;
 
     private List<FeatureMap> _featureMaps;
 
     private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] activationTensorShape = new int[4];
+    private int[] _activationTensorShape = new int[4];
 
     /// <summary>
     /// Represents a Maxpool Layer of a CNN.
@@ -34,11 +34,11 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     {
         base.UpdateForChangedParams();
 
-        Vector2Int newRes = featureMapResolution;
+        Vector2Int newRes = _featureMapResolution;
         int newDepth = reducedDepth;
         if (_inputLayer) {
-            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), reducedShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
-            featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), reducedShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+            _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
 
 
             newDepth = _inputLayer.GetOutputShape().z;
@@ -48,17 +48,17 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             lineCircleGrid = ((ConvLayer)_inputLayer).lineCircleGrid;
         }
 
-        if(newRes != featureMapResolution ||
+        if(newRes != _featureMapResolution ||
             newDepth != reducedDepth ||
-            stride != oldStride ||
+            stride != _oldStride ||
             IsInitialized() == false ||
             _featureMaps == null)
         {
-            featureMapResolution = newRes;
+            _featureMapResolution = newRes;
 
             reducedDepth = newDepth;
             InitFeatureMaps();
-            oldStride = stride;
+            _oldStride = stride;
         }
 
         UpdateFeatureMaps();
@@ -125,7 +125,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// <returns></returns>
     public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
     {
-        currentConvShape = convShape;
+        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();
@@ -139,7 +139,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 
     override public void CalcMesh()
     {
-        if(_input == null)
+        if(input == null)
         {
             base.CalcMesh();
             return;
@@ -161,7 +161,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             if (_activationTensorPerEpoch.ContainsKey(epoch))
             {
 
-                int[] index = Util.GetSampleMultiDimIndices(activationTensorShape, i, GlobalManager.Instance.testSample);
+                int[] index = Util.GetSampleMultiDimIndices(_activationTensorShape, i, GlobalManager.Instance.testSample);
 
                 Array activationTensor = _activationTensorPerEpoch[epoch];
                 float tensorVal = (float)activationTensor.GetValue(index) * pointBrightness;
@@ -175,7 +175,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             }
         }
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(reducedShape, featureMapResolution, featureMapTheoreticalResolution, stride, allCalculations);
+        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations);
 
         List<int> lineInds = new List<int>();
 
@@ -244,12 +244,12 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     
     public override Vector3Int GetOutputShape()
     {
-        return new Vector3Int(featureMapResolution.x, featureMapResolution.y, reducedDepth);
+        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, reducedDepth);
     }
 
     public override Vector2Int Get2DOutputShape()
     {
-        return featureMapResolution;
+        return _featureMapResolution;
     }
 
     public override void SetExpansionLevel(float level)
@@ -283,12 +283,12 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 
     public void SetActivationTensorShape(int[] tensorShape)
     {
-        this.activationTensorShape = tensorShape;
+        this._activationTensorShape = tensorShape;
     }
 
     public int[] GetActivationTensorShape()
     {
-        return activationTensorShape;
+        return _activationTensorShape;
     }
 
     public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)
@@ -296,8 +296,8 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInfo info = new FeatureMapInfo();
         info.position = filterPositions[featureMapIndex];
-        info.shape = featureMapResolution;
-        info.filterShape = currentConvShape;
+        info.shape = _featureMapResolution;
+        info.convShape = _currentConvShape;
         info.outputShape = Get2DOutputShape();
         info.spacing = filterSpacing;
         return info;
