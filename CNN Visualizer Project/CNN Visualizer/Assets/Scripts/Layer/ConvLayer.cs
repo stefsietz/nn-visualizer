@@ -27,9 +27,15 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     private Vector2Int _currentConvShape = new Vector2Int(1, 1);
 
+    /// <summary>
+    /// 
+    /// </summary>
     [Range(0.0f, 1.0f)]
     public float allFiltersSpacing = 0.5f;
 
+    /// <summary>
+    /// can iterate through different kernel positions on the 2d featuremap. -1 to display the kernel spread out over the whole featuremap
+    /// </summary>
     [Range(-1, 128)]
     public int convLocation = 0;
 

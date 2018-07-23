@@ -1,0 +1,91 @@
+refactor featuremap:
+
+generell: ein struct mit output info pro output layer (filter shape/stride/dilution/usw.)
+
+methoden:
+public FeatureMap(I2DMapLayer layer, int index)
+constructor sollte jetzt nur informationen initialisieren, die vom input layer her feststehen, sprich position, spacing, featuremap
+resolution ("shape"), aber nicht "outputshape", weil die hängt ja von den strides usw. der einzelnen output layer ab. InitGrids() sollte
+dann auch raus, weil das ja nur nötig ist wenn konkret outputlayer angehängt werden.
+
+public void AddOutputLayer(InputAcceptingLayer layer)
+die methode ist anscheinend eh neu... da sollte dann halt alles zum initialisieren der ouput struktur stattfinden.
+
+public GridShape GetPixelGrid()
+einfacher accessor, sollte so bleiben können...
+
+public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, Vector2Int outputShape,
+				Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
+ist jetzt eh schon halb umgebaut so dass es die filtergrids für einen spezifischen output layer zurück gibt, muss halt noch zu ende
+implementiert werden.
+
+public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape,
+					Vector2Int stride, float allCalcs, int convLocation)
+ebenso hier... ist jetzt umgebaut auf die dictionaries, sollte einfach zu konvertieren sein, muss dann halt gut durchgetestet
+werden!
+
+private void ReinitGridsIfNecessary(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride)
+sollte ersetzt werden durch ein notifier system:
+im prinzip sollte das überhaupt so stattfinden und nicht mit den endlosen oder ("||") ketten die änderungen checken. es sollte setter geben zu den
+public parametern, die dann alles was davon abhängt invalidaten.
+jetzt ist es ja so, dass in jedem aufruf von OnValidate() über UpdateMesh() NotifyObserver() aufgerufen wird, also dann alle abhängigen
+layer geupdatet werden. DAS IST ABER SCHLECHT IMPLEMENTIERT: Es wird einfach OnValidate() vom Layer aufgerufen und nicht über ein interface
+gehandhabt! das sollte geändert werden. die NotifyObserver()  methode schaut so aus:
+
+    public void NotifyObservers()
+    {
+        foreach(Layer observer in _observers)
+        {
+            if (observer != null)
+            {
+                if(observer._mesh == null)
+                {
+                    observer.Init();
+                }
+                observer.OnValidate();
+            }
+        }
+    }
+
+zusätzlich wird hier Init() schon vor OnValidate() aufgerufen, obwohl das dann in OnValidate() eh nochmal aufgerufen wird!
+NotifyObservers() in UpdateMesh() ist grundsätzlich auch problematisch, da UpdateMesh() in sehr vielen settern aufgerufen wird, die teils
+keinen einfluss auf die nachfolgenden layer haben (z.b. pointbrightness, setsample, setweightbrightness), also viel redundanz verursacht wird.
+Hier also viel refactoring bedarf.
+
+Dann sollte halt die zugehörige featuremap auch einfach subscribed sein als observer auf layer changes. die changes, die NotifyObservers auslösen,
+sollten halt wirklich die geometrie verändern und nicht nur die farben oder sowas.
+
+die featuremaps sollten dann halt zusätzlich irgendwie ein observer von dern output featuremaps sein, damit changes von denen auch die output strukturen
+updaten. es sollten also dann die layer zwei notify methoden haben:
+eine wird durch input shape changes, also changes, die resolution (abhängig von anderen params), spacing, position usw? betreffen, und notified dann die eigene featuremap und halt
+die abhängigen layer,
+die andere wird durch parameter wie stride, dilution, convShape ausgelöst und betrifft dann die featuremap des layers davor, dessen outputlayer der notifier ist.
+
+private Vector3 GetOutputGridOffset(Vector2 theoreticalOutputShape, Vector2Int outputShape)
+dann halt pro output layer...
+
+public Shape GetInputGrid(float allCalcs)
+gibt endpoints für input layer lines zurück, sollte also so bleiben können, da sie nichts mit output layers zu tun hat
+
+ private void InitGrids()
+ nur _pixelGrid initialisieren, alles andere wird beim anhängen von outputlayern initialisiert.
+ 
+ private void InitFilterGridsForLayer(InputAcceptingLayer layer)
+ beinhaltet eh soweit die logik für einen outputlayer, muss halt umgebaut werden auf die neue struktur mit dem struct pro output layer. wird dann auch abhängig
+ von dilution werden, wenn das integriert wird...
+ 
+ TODO: momentan gibt es GetPointShapes() (gibt alle featuremap pixel des layers zum punkte rendern zurück) und GetLineStartShapes (gibt die Filter grids der connection startpoints zurück).
+ sollte analog zu korrespondierenden featuremap methoden renamed werden.
+ 
+private void UpdateGrids()
+war ja vor umbau urspärunglich analog zu InitGrids(), das sollte irgendwie beser verpackt werden, dass die beiden methoden die gleiche logik aufrufen, nur halt die eine
+neue objekte erstellt während die andere nur werte neu setzt.
+
+public void UpdateValues(I2DMapLayer layer)
+hier wird ja abgefragt, ob es nötig ist, die InitGrids() oder die UpdateGrids() Methode aufzurufen, und wird jedes mal ausgelöst durch GetLineStartShapes vom OutputLayer,
+das sollte also auch unbedingt auf observer umgebaut werden.
+
+public static Vector2Int GetFeatureMapShapeFromInput(Vector2Int inputShape, Vector2Int convShape, Vector2Int inputStride, Vector2Int padding)
+static -> bleibt so, die theoretical auch.
+
+Get2DSpacing bleibt auch so.
