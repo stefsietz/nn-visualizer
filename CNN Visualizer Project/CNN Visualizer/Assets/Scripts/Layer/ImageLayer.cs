@@ -282,7 +282,7 @@ public class ImageLayer : Layer, I2DMapLayer
         Vector3[] filterPositions = GetInterpolatedFilterPositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInfo info = new FeatureMapInfo();
         info.position = filterPositions[featureMapIndex];
-        info.shape = reducedResolution;
+        info.inputShape = reducedResolution;
         info.convShape = _currentConvShape;
         info.outputShape = Get2DOutputShape();
         info.spacing = pixelSpacing;

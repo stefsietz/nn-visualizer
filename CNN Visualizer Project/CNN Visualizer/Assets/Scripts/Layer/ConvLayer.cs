@@ -394,9 +394,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInfo info = new FeatureMapInfo();
         info.position = filterPositions[featureMapIndex];
-        info.shape = _featureMapResolution;
-        info.convShape = _currentConvShape;
-        info.outputShape = Get2DOutputShape();
+        info.inputShape = _featureMapResolution;
         info.spacing = filterSpacing;
         return info;
     }

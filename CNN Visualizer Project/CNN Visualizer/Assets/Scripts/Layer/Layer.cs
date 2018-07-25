@@ -12,8 +12,10 @@ using System.Collections.Generic;
 /// Base class for the layer component
 public abstract class Layer : MonoBehaviour
 {
+    //TODO: these should be more class specific
     public Vector2Int convShape;
     public Vector2Int stride = new Vector2Int(1, 1);
+    public Vector2Int dilution = new Vector2Int(1, 1);
     public bool padding = true;
 
     [Range(0.0f, 5.0f)]
@@ -119,7 +121,7 @@ public abstract class Layer : MonoBehaviour
     /// <returns></returns>
     public Vector2Int GetPadding()
     {
-        return Vector2Int.FloorToInt(convShape / new Vector2(2, 2));
+        return padding ? Vector2Int.FloorToInt(convShape / new Vector2(2, 2)) : new Vector2Int(0, 0);
     }
 
     /// <summary>
