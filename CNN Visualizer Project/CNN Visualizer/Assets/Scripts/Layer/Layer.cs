@@ -111,7 +111,7 @@ public abstract class Layer : MonoBehaviour
     public bool showOriginalDepth = false;
 
     protected abstract List<Shape> GetPointShapes();
-    public abstract List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs);
+    public abstract List<List<Shape>> GetLineStartShapes(InputAcceptingLayer ouputLayer, float allCalcs);
     public abstract Vector3Int GetOutputShape();
 
     public Layer()
@@ -325,8 +325,8 @@ public abstract class Layer : MonoBehaviour
         return _initialized;
     }
 
-    public virtual List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    public virtual List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
     {
-        return GetLineStartShapes(convShape, outputShape, theoreticalOutputShape, stride, allCalcs);
+        return GetLineStartShapes(outputLayer, allCalcs);
     }
 }

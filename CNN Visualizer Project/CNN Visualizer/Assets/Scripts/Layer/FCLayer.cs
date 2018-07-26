@@ -110,7 +110,7 @@ public class FCLayer : InputAcceptingLayer
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
+    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
         List<List<Shape>> list = new List<List<Shape>>();
         list.Add(GetPointShapes());
@@ -185,7 +185,7 @@ public class FCLayer : InputAcceptingLayer
         }
 
         //Input Layer Points, each inner List only contains one point
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(inputShape, new Vector2Int(1, 1), new Vector2(1, 1), new Vector2Int(1, 1), 0.0f);
+        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, 0.0f); //TODO: Is this still correct after refactoring?
 
         List<int> lineInds = new List<int>();
 

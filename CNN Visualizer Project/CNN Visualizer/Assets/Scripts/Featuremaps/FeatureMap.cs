@@ -27,7 +27,7 @@ public struct FeatureMapOutputProperties
     public List<GridShape> allCalcFilterGrids;
 }
 
-public struct FeatureMapInfo
+public struct FeatureMapInputProperties
 {
     /// <summary>
     /// 3d position of the featuremap
@@ -43,7 +43,7 @@ public struct FeatureMapInfo
 
 public interface I2DMapLayer
 {
-    FeatureMapInfo GetFeatureMapInfo(int featureMapIndex);
+    FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex);
 }
 public class FeatureMap
 {
@@ -72,7 +72,7 @@ public class FeatureMap
     public FeatureMap(I2DMapLayer layer, int index)
     {
         this._index = index;
-        FeatureMapInfo info = layer.GetFeatureMapInfo(index);
+        FeatureMapInputProperties info = layer.GetFeatureMapInputProperties(index);
         this.position = info.position;
         this._inputShape = info.inputShape;
         this.spacing = info.spacing;
@@ -97,7 +97,12 @@ public class FeatureMap
 
         this._outputPropertiesDict[outputLayer] = props;
 
-        this.InitOrUpdateFilterGridsForLayer(outputLayer, true);
+        this.InitOrUpdateOutputGridsForLayer(outputLayer, true);
+    }
+
+    public void RemoveOutputLayer(InputAcceptingLayer outputLayer)
+    {
+        _outputPropertiesDict.Remove(outputLayer);
     }
 
     public GridShape GetPixelGrid()
@@ -114,10 +119,8 @@ public class FeatureMap
     /// <param name="stride"></param>
     /// <param name="allCalcs">Interpolation parameter for all calc view</param>
     /// <returns></returns>
-    public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
+    public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, float allCalcs)
     {
-        ReinitGridsIfNecessary(outputLayer, outputShape, theoreticalOutputShape, stride);
-
         FeatureMapOutputProperties props = _outputPropertiesDict[outputLayer];
 
         if (allCalcs == 0)
@@ -139,17 +142,15 @@ public class FeatureMap
         }
     }
 
-    public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
         //TODO: maybe rename as "GetFilterGridsForOutputStartpoints"?
     {
         FeatureMapOutputProperties props = _outputPropertiesDict[outputLayer];
 
         if(convLocation == -1)
         {
-            return GetFilterGrids(outputLayer, outputShape, theoreticalOutputShape, stride, allCalcs);
+            return GetFilterGrids(outputLayer, allCalcs);
         }
-
-        ReinitGridsIfNecessary(outputLayer, outputShape, theoreticalOutputShape, stride);
 
         if (allCalcs == 0)
         {
@@ -179,24 +180,6 @@ public class FeatureMap
             return filterGrids;
         }
     }
-
-    private void ReinitGridsIfNecessary(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride)
-    {
-        //check if requested outputshape is same as existing, reinit allcalgrids if not
-        if (outputShape != this._outputShape
-            || stride != this.stride
-            || this._theoreticalOutputShape != theoreticalOutputShape
-            && outputShape != new Vector2Int(0, 0))
-        {
-            this._outputShape = outputShape;
-            this._theoreticalOutputShape = theoreticalOutputShape;
-            this._outputPosition = position + GetOutputGridOffset(theoreticalOutputShape, outputShape);
-            this.stride = stride;
-            InitGrids();
-            InitOrUpdateFilterGridsForLayer(outputLayer, true);
-        }
-    }
-
 
     private Vector3 GetOutputGridOffset(Vector2 theoreticalOutputShape, Vector2Int outputShape)
     {
@@ -239,7 +222,7 @@ public class FeatureMap
         _pixelGrid = new GridShape(position, _inputShape, Get2DSpacing());
     }
 
-    private void InitOrUpdateFilterGridsForLayer(InputAcceptingLayer outputLayer, bool initialize)
+    private void InitOrUpdateOutputGridsForLayer(InputAcceptingLayer outputLayer, bool initialize)
     {
         FeatureMapOutputProperties props = this._outputPropertiesDict[outputLayer];
         props.filterInstanceGrid = InitOrUpdateGrid(initialize ? null : props.filterInstanceGrid, position + props.positionOffset,
@@ -295,25 +278,36 @@ public class FeatureMap
         return outgrid;
     }
 
-    public void UpdateValues(I2DMapLayer layer)
+
+    /// <summary>
+    /// Only for updates that don't change Geomtetry, after shape changes call ReInitValues instead
+    /// </summary>
+    /// <param name="layer"></param>
+    public void UpdateValuesForInputParams(I2DMapLayer layer)
     {
-        FeatureMapInfo info = layer.GetFeatureMapInfo(_index);
+        FeatureMapInputProperties info = layer.GetFeatureMapInputProperties(_index);
         this.position = info.position;
-        this._outputPosition = info.position;
         this.spacing = info.spacing;
+    }
 
-
-
-
-        bool reinit = false;
-        if (this._inputShape != info.inputShape || this._convShape != info.convShape || this._outputShape != info.outputShape) reinit = true;
-
+    public void ReInitForChangedInputParams(I2DMapLayer layer)
+    {
+        FeatureMapInputProperties info = layer.GetFeatureMapInputProperties(_index);
+        this.position = info.position;
+        this.spacing = info.spacing;
         this._inputShape = info.inputShape;
-        this._outputShape = info.outputShape;
-        this._convShape = info.convShape;
 
-        if (reinit) InitGrids();
-        else UpdateGrids();
+        InitGrids();
+    }
+
+    public void UpdateForChangedOutputParams(InputAcceptingLayer outputLayer)
+    {
+        InitOrUpdateOutputGridsForLayer(outputLayer, false);
+    }
+
+    public void ReInitForChangedOutputParams(InputAcceptingLayer outputLayer)
+    {
+        InitOrUpdateOutputGridsForLayer(outputLayer, true);
     }
 
     public static Vector2Int GetFeatureMapShapeFromInput(Vector2Int inputShape, Vector2Int convShape, Vector2Int inputStride, Vector2Int padding)

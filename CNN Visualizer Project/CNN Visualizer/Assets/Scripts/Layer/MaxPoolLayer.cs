@@ -37,8 +37,8 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         Vector2Int newRes = _featureMapResolution;
         int newDepth = reducedDepth;
         if (_inputLayer) {
-            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
-            _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, GetPadding());
+            _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, GetPadding());
 
 
             newDepth = _inputLayer.GetOutputShape().z;
@@ -94,7 +94,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 
         for (int i=0; i<_featureMaps.Count; i++)
         {
-            _featureMaps[i].UpdateValues(this);
+            _featureMaps[i].UpdateValuesForInputParams(this);
         } 
     }
 
@@ -123,7 +123,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
+    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
         _currentConvShape = convShape;
         UpdateFeatureMaps();
@@ -131,7 +131,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         List<List<Shape>> filterGrids = new List<List<Shape>>();
         for (int i = 0; i < _featureMaps.Count; i++)
         {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputShape, theoreticalOutputShape, stride, allCalcs));
+            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs));
         }
         return filterGrids;
     }
@@ -175,7 +175,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             }
         }
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations);
+        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations);
 
         List<int> lineInds = new List<int>();
 
@@ -291,14 +291,12 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         return _activationTensorShape;
     }
 
-    public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)
+    public FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
     {
         Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
-        FeatureMapInfo info = new FeatureMapInfo();
+        FeatureMapInputProperties info = new FeatureMapInputProperties();
         info.position = filterPositions[featureMapIndex];
         info.inputShape = _featureMapResolution;
-        info.convShape = _currentConvShape;
-        info.outputShape = Get2DOutputShape();
         info.spacing = filterSpacing;
         return info;
     }

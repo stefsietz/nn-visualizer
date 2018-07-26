@@ -121,7 +121,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
         for (int i=0; i<_featureMaps.Count; i++)
         {
-            _featureMaps[i].UpdateValues(this);
+            _featureMaps[i].UpdateValuesForInputParams(this);
         }
     }
 
@@ -150,7 +150,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs)
+    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
         _currentConvShape = convShape;
         UpdateFeatureMaps();
@@ -158,12 +158,12 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         List<List<Shape>> filterGrids = new List<List<Shape>>();
         for (int i = 0; i < _featureMaps.Count; i++)
         {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputShape, theoreticalOutputShape, stride, allCalcs));
+            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs));
         }
         return filterGrids;
     }
 
-    public override List<List<Shape>> GetLineStartShapes(Vector2Int convShape, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
+    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
     {
         _currentConvShape = convShape;
         UpdateFeatureMaps();
@@ -171,7 +171,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         List<List<Shape>> filterGrids = new List<List<Shape>>();
         for (int i = 0; i < _featureMaps.Count; i++)
         {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputShape, theoreticalOutputShape, stride, allCalcs, convLocation));
+            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs, convLocation));
         }
         return filterGrids;
     }
@@ -224,8 +224,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         }
 
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations);
-        inputFilterPoints = _inputLayer.GetLineStartShapes(convShape, _featureMapResolution, _featureMapTheoreticalResolution, stride, allCalculations, this.convLocation);
+        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations);
+        inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations, this.convLocation);
 
         //TODO: reuse generated vert positions
 
@@ -391,10 +391,10 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         return _activationTensorShape;
     }
 
-    public FeatureMapInfo GetFeatureMapInfo(int featureMapIndex)
+    public FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
     {
         Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
-        FeatureMapInfo info = new FeatureMapInfo();
+        FeatureMapInputProperties info = new FeatureMapInputProperties();
         info.position = filterPositions[featureMapIndex];
         info.inputShape = _featureMapResolution;
         info.spacing = filterSpacing;
