@@ -12,11 +12,80 @@ using System.Collections.Generic;
 /// Base class for the layer component
 public abstract class Layer : MonoBehaviour
 {
+    public delegate void OnTopologyChangeDelegate();
+    public event OnTopologyChangeDelegate OnTopologyChange;
+
     //TODO: these should be more class specific
-    public Vector2Int convShape;
-    public Vector2Int stride = new Vector2Int(1, 1);
-    public Vector2Int dilution = new Vector2Int(1, 1);
-    public bool padding = true;
+    protected Vector2Int _oldConvShape;
+    public Vector2Int convShape
+    {
+        get
+        {
+            return _oldConvShape;
+        }
+        set
+        {
+            if (_oldConvShape == value)
+                return;
+
+            _oldConvShape = value;
+
+            RaiseOnTopologyChange();
+        }
+    }
+
+    protected Vector2Int _oldStride = new Vector2Int(1, 1);
+    public Vector2Int stride
+    {
+        get
+        {
+            return _oldStride;
+        }
+        set
+        {
+            if (_oldStride == value)
+                return;
+
+            _oldStride = value;
+
+            RaiseOnTopologyChange();
+        }
+    }
+    protected Vector2Int _oldDilution = new Vector2Int(1, 1);
+    public Vector2Int dilution
+    {
+        get
+        {
+            return _oldDilution;
+        }
+        set
+        {
+            if (_oldDilution == value)
+                return;
+
+            _oldDilution = value;
+
+            RaiseOnTopologyChange();
+        }
+    }
+
+    protected bool _oldPadding = true;
+    public bool padding
+    {
+        get
+        {
+            return _oldPadding;
+        }
+        set
+        {
+            if (_oldPadding == value)
+                return;
+
+            _oldPadding = value;
+
+            RaiseOnTopologyChange();
+        }
+    }
 
     [Range(0.0f, 5.0f)]
     public float pointBrightness = 1.0f;
@@ -47,7 +116,13 @@ public abstract class Layer : MonoBehaviour
 
     public Layer()
     {
+        OnTopologyChange += new OnTopologyChangeDelegate(UpdateForChangedParams);
+    }
 
+    protected void RaiseOnTopologyChange()
+    {
+        if (OnTopologyChange != null)
+            OnTopologyChange();
     }
 
     public virtual void Init()
@@ -83,7 +158,6 @@ public abstract class Layer : MonoBehaviour
 
     public virtual void UpdateMesh()
     {
-        UpdateForChangedParams();
         if (_mesh != null)
         {
             _mesh.Clear();

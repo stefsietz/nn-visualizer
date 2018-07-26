@@ -8,13 +8,23 @@ using System;
 /// </summary>
 public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 {
-    private Vector2Int _oldConvShape;
-    private Vector2Int _oldStride;
+    private int _oldFullDepth = 64;
+    public int fullDepth
+    {
+        get
+        {
+            return _oldFullDepth;
+        }
+        set
+        {
+            if (_oldFullDepth == value)
+                return;
 
-    public int fullDepth = 64;
-    private int _oldFullDepth;
+            _oldFullDepth = value;
 
-    private bool _oldPadding;
+            RaiseOnTopologyChange();
+        }
+    }
 
     /// <summary>
     /// feature map always refers to the layers' output
@@ -70,21 +80,13 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
             _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
         }
 
-        if(reducedDepth != _oldReducedDepth ||
-            convShape != _oldConvShape ||
-            newRes != _featureMapResolution ||
-            stride != _oldStride ||
-            padding != _oldPadding ||
+        if( newRes != _featureMapResolution ||
             IsInitialized() == false ||
             _featureMaps == null)
         {
             _featureMapResolution = newRes;
 
             InitFeatureMaps();
-            _oldConvShape = convShape;
-            _oldReducedDepth = reducedDepth;
-            _oldStride = stride;
-            _oldPadding = padding;
         }
     }
 

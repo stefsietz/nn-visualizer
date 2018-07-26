@@ -97,7 +97,7 @@ public class FeatureMap
 
         this._outputPropertiesDict[outputLayer] = props;
 
-        this.InitFilterGridsForLayer(outputLayer);
+        this.InitOrUpdateFilterGridsForLayer(outputLayer, true);
     }
 
     public GridShape GetPixelGrid()
@@ -118,19 +118,21 @@ public class FeatureMap
     {
         ReinitGridsIfNecessary(outputLayer, outputShape, theoreticalOutputShape, stride);
 
+        FeatureMapOutputProperties props = _outputPropertiesDict[outputLayer];
+
         if (allCalcs == 0)
         {
             List<Shape> filterGrids = new List<Shape>();
-            filterGrids.Add(_filterGrid);
+            filterGrids.Add(props.filterGrid);
             return filterGrids;
         } else
         {
             List<Shape> filterGrids = new List<Shape>();
-            foreach(GridShape gr in _allCalcFilterGridsForLayer[outputLayer])
+            foreach(GridShape gr in props.allCalcFilterGrids)
             {
 
-                gr.spacing /= (_inputShape.x - 1) / (float)(_convShapeForLayer[outputLayer].x - 1);
-                GridShape interpolated = gr.InterpolatedGrid(((GridShape)_filterGrid), 1.0f - allCalcs);
+                gr.spacing /= (_inputShape.x - 1) / (float)(props.convShape.x - 1);
+                GridShape interpolated = gr.InterpolatedGrid(((GridShape)props.filterGrid), 1.0f - allCalcs);
                 filterGrids.Add(interpolated);
             }
             return filterGrids;
@@ -140,6 +142,8 @@ public class FeatureMap
     public List<Shape> GetFilterGrids(InputAcceptingLayer outputLayer, Vector2Int outputShape, Vector2 theoreticalOutputShape, Vector2Int stride, float allCalcs, int convLocation)
         //TODO: maybe rename as "GetFilterGridsForOutputStartpoints"?
     {
+        FeatureMapOutputProperties props = _outputPropertiesDict[outputLayer];
+
         if(convLocation == -1)
         {
             return GetFilterGrids(outputLayer, outputShape, theoreticalOutputShape, stride, allCalcs);
@@ -150,11 +154,11 @@ public class FeatureMap
         if (allCalcs == 0)
         {
             List<Shape> filterGrids = new List<Shape>();
-            GridShape gr = (GridShape)_allCalcFilterGridsForLayer[outputLayer][convLocation].Clone();
-            gr.spacing /= (_inputShape.x - 1) / (float)(_convShapeForLayer[outputLayer].x - 1);
+            GridShape gr = (GridShape)props.allCalcFilterGrids[convLocation].Clone();
+            gr.spacing /= (_inputShape.x - 1) / (float)(props.convShape.x - 1);
 
-            GridShape gr2 = (GridShape)_allCalcFilterGridsForLayer[outputLayer][convLocation].Clone();
-            gr2.spacing /= (_inputShape.x - 1) / (float)(_convShapeForLayer[outputLayer].x - 1);
+            GridShape gr2 = (GridShape)props.allCalcFilterGrids[convLocation].Clone();
+            gr2.spacing /= (_inputShape.x - 1) / (float)(props.convShape.x - 1);
 
             filterGrids.Add(gr2); 
             return filterGrids;
@@ -162,12 +166,12 @@ public class FeatureMap
         else
         {
             List<Shape> filterGrids = new List<Shape>();
-            foreach (GridShape gr in _allCalcFilterGridsForLayer[outputLayer])
+            foreach (GridShape gr in props.allCalcFilterGrids)
             {
 
-                gr.spacing /= (_inputShape.x - 1) / (float)(_convShapeForLayer[outputLayer].x - 1);
+                gr.spacing /= (_inputShape.x - 1) / (float)(props.convShape.x - 1);
 
-                GridShape gr2 = (GridShape)_allCalcFilterGridsForLayer[outputLayer][convLocation].Clone();
+                GridShape gr2 = (GridShape)props.allCalcFilterGrids[convLocation].Clone();
 
                 GridShape interpolated = gr.InterpolatedGrid(gr2, 1.0f - allCalcs);
                 filterGrids.Add(interpolated);
@@ -189,7 +193,7 @@ public class FeatureMap
             this._outputPosition = position + GetOutputGridOffset(theoreticalOutputShape, outputShape);
             this.stride = stride;
             InitGrids();
-            InitFilterGridsForLayer(outputLayer);
+            InitOrUpdateFilterGridsForLayer(outputLayer, true);
         }
     }
 
@@ -233,14 +237,13 @@ public class FeatureMap
     private void InitGrids()
     {
         _pixelGrid = new GridShape(position, _inputShape, Get2DSpacing());
-        _outputGrid = new GridShape(_outputPosition, _inputShape, Get2DSpacing());
-        _allCalcFilterGridsForLayer = new Dictionary<Layer, List<Shape>>();
     }
 
-    private void InitFilterGridsForLayer(InputAcceptingLayer outputLayer)
+    private void InitOrUpdateFilterGridsForLayer(InputAcceptingLayer outputLayer, bool initialize)
     {
         FeatureMapOutputProperties props = this._outputPropertiesDict[outputLayer];
-        props.filterInstanceGrid = new GridShape(position + props.positionOffset, props.outputFilterArrayShape, Get2DSpacing() * props.stride.x); //TODO: 2 Dimensional stride / spacing
+        props.filterInstanceGrid = InitOrUpdateGrid(initialize ? null : props.filterInstanceGrid, position + props.positionOffset,
+            props.outputFilterArrayShape, Get2DSpacing() * props.stride.x); //TODO: 2 Dimensional stride / spacing
 
         Vector2 safeSpacing = new Vector2(0.0f, 0.0f);
         if (props.convShape.x > 1)
@@ -250,60 +253,46 @@ public class FeatureMap
 
         Vector3[] allCalcPositions = props.filterInstanceGrid.GetVertices(true);
 
-        props.allCalcFilterGrids = new List<GridShape>();
-        props.filterGrid = new GridShape(position + props.positionOffset, props.convShape, safeSpacing);
+        props.filterGrid = InitOrUpdateGrid(initialize ? null : props.filterGrid, position + props.positionOffset, props.convShape, safeSpacing);
 
+        if(initialize)
+            props.allCalcFilterGrids = new List<GridShape>();
 
         for (int i = 0; i < allCalcPositions.Length; i++)
         {
-            props.allCalcFilterGrids.Add(new GridShape(allCalcPositions[i], props.convShape, safeSpacing));
+            GridShape currentGrid = InitOrUpdateGrid(initialize ? null : props.allCalcFilterGrids[i], allCalcPositions[i], props.convShape, safeSpacing);
+            if (initialize)
+                props.allCalcFilterGrids.Add(currentGrid);
+            else
+                props.allCalcFilterGrids[i] = props.allCalcFilterGrids[i];
         }
 
         this._outputPropertiesDict[outputLayer] = props;
     }
 
-    private void UpdateGrids()
+    /// <summary>
+    /// Initializes or updates a grid with provided parameters and then returns it. If grid is null, a new instance is created.
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <param name="position"></param>
+    /// <param name="shape"></param>
+    /// <param name="spacing"></param>
+    /// <returns></returns>
+    private GridShape InitOrUpdateGrid(GridShape grid, Vector3 position, Vector2Int shape, Vector2 spacing)
     {
-        _pixelGrid.position = position;
-        _pixelGrid.resolution = _inputShape;
-        _pixelGrid.spacing = Get2DSpacing();
-
-        _outputGrid.position = _outputPosition;
-        _outputGrid.resolution = _outputShape;
-        _outputGrid.spacing = Get2DSpacing() * stride;
-
-
-        _filterGrid.position = _outputPosition;
-
-        Vector2 safeSpacing = new Vector2(0.0f, 0.0f);
-        if (_convShape.x > 1)
+        GridShape outgrid = grid;
+        if (outgrid == null)
         {
-            safeSpacing = (_inputShape.x - 1) / (float)(_convShape.x - 1) * Get2DSpacing();
-        }
-
-        ((GridShape)_filterGrid).spacing = safeSpacing;
-
-        Vector3[] allCalcPositions;
-
-        if (_outputShape == _inputShape) //means stride == 1
-        {
-            allCalcPositions = _pixelGrid.GetVertices(true);
+            outgrid = new GridShape(position, shape, spacing);
         }
         else
         {
-            _outputGrid.position = _outputPosition + new Vector3(0, 1.0f, 0);
-            _outputGrid.resolution = _outputShape;
-            _outputGrid.spacing = safeSpacing;
-
-            allCalcPositions = _outputGrid.GetVertices(true);
+            outgrid.position = position;
+            outgrid.resolution = shape;
+            outgrid.spacing = spacing;
         }
 
-        for (int i = 0; i < allCalcPositions.Length; i++)
-        {
-            ((GridShape)_allCalcFilterGrids[i]).position = allCalcPositions[i];
-            ((GridShape)_allCalcFilterGrids[i]).resolution = _convShape;
-            ((GridShape)_allCalcFilterGrids[i]).spacing = safeSpacing;
-        }
+        return outgrid;
     }
 
     public void UpdateValues(I2DMapLayer layer)
