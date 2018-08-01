@@ -97,9 +97,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c3724587841858468a67a3b273cd302, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  convShape: {x: 3, y: 3}
-  stride: {x: 1, y: 1}
-  padding: 1
   pointBrightness: 4
   weightBrightness: 1
   zOffset: 1
@@ -113,7 +110,6 @@ MonoBehaviour:
   allCalculations: 0
   lineCircleGrid: 0
   lineXToZ: 0
-  fullDepth: 64
   allFiltersSpacing: 0.214
   convLocation: 0
   fullResHeight: 5

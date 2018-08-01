@@ -158,6 +158,8 @@ public abstract class Layer : MonoBehaviour
 
     public virtual void UpdateMesh()
     {
+        UpdateForChangedParams();
+
         if (_mesh != null)
         {
             _mesh.Clear();

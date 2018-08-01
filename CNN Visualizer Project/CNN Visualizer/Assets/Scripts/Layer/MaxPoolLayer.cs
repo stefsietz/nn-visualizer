@@ -10,8 +10,6 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     private Vector2Int _featureMapResolution;
     private Vector2 _featureMapTheoreticalResolution;
 
-    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
-
     public float nodeSize;
 
     private List<FeatureMap> _featureMaps;
@@ -125,7 +123,6 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// <returns></returns>
     public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
-        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();

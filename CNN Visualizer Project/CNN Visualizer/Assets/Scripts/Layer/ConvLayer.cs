@@ -35,8 +35,6 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     /// </summary>
     private Vector2 _featureMapTheoreticalResolution;
 
-    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
-
     /// <summary>
     /// 
     /// </summary>
@@ -152,7 +150,6 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     /// <returns></returns>
     public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
-        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();
@@ -165,7 +162,6 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
     {
-        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();

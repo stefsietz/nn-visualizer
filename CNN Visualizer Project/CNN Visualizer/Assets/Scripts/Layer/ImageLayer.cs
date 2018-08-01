@@ -14,8 +14,6 @@ public class ImageLayer : Layer, I2DMapLayer
     public Vector2Int reducedResolution = new Vector2Int(11, 11);
     private Vector2Int _oldreducedResolution;
 
-    private Vector2Int _currentConvShape = new Vector2Int(1, 1);
-
     [Range(0.0f, 1.0f)]
     public float spread = 1.0f;
 
@@ -236,7 +234,6 @@ public class ImageLayer : Layer, I2DMapLayer
 
     public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
     {
-        _currentConvShape = convShape;
         UpdateFeatureMaps();
 
         List<List<Shape>> filterGrids = new List<List<Shape>>();

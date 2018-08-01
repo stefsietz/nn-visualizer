@@ -1,3 +1,7 @@
+vielleicht: fc layer als layer mit 1x1 featuremaps behandeln: hätte vorteil, dass featuremap stuff in layer implementiert werden könnte. jetzt ein bisschen blöd,
+weil 2d layer eine eigentschaft ist und input accepting eine andere, es wäre gut die beiden in einer hierarchie zu haben...
+
+
 refactor featuremap:
 
 generell: ein struct mit output info pro output layer (filter shape/stride/dilution/usw.)
