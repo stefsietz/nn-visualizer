@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNN Visualizer", "Assembly-CSharp.csproj", "{09BC44E0-8292-0853-1FF4-86152A766EE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNN Visualizer", "Tests.csproj", "{9C317385-6344-37ED-A8F0-063E275E36F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{09BC44E0-8292-0853-1FF4-86152A766EE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09BC44E0-8292-0853-1FF4-86152A766EE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09BC44E0-8292-0853-1FF4-86152A766EE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C317385-6344-37ED-A8F0-063E275E36F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C317385-6344-37ED-A8F0-063E275E36F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C317385-6344-37ED-A8F0-063E275E36F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C317385-6344-37ED-A8F0-063E275E36F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

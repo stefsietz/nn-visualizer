@@ -19,7 +19,7 @@ public class CircleShape : Shape
     }
 
 
-    protected override void InitVerts()
+    public override void InitVerts()
     {
         _verts = new Vector3[resolution];
         for (int i=0; i<_verts.Length; i++)

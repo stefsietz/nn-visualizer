@@ -11,7 +11,7 @@ public abstract class Shape : ICloneable
     public Vector3 position { get; set; }
     protected Vector3[] _verts;
 
-    protected abstract void InitVerts();
+    public abstract void InitVerts();
 
     public Shape(Vector3 position)
 	{

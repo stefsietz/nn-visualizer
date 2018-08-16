@@ -6,99 +6,14 @@ using System;
 /// <summary>
 /// Represents a Fully Connected Layer of a CNN.
 /// </summary>
-public class FCLayer : InputAcceptingLayer
+public class FCLayer : ConvLayer
 {
-    public int fullDepth = 1024;
-    private int _oldFullDepth;
-
-    private Vector3Int _inputResolution;
-
     [Range(0.0f, 1.0f)]
     public float collapseInput;
 
-    public float nodeSize;
-
-    private List<Vector3> _nodePositions;
-
-    private Dictionary<int, Array> _tensorPerEpoch = new Dictionary<int, Array>();
-    private int[] _tensorShape = new int[4];
-
-    private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] _activationTensorShape = new int[4];
-
     public FCLayer()
     {
-        reducedDepth = 16;
-    }
-
-    /// <summary>
-    /// Checks if parameters have been updated and reinitializes necessary data.
-    /// </summary>
-    protected override void UpdateForChangedParams()
-    {
-        base.UpdateForChangedParams();
-
-        Vector3Int newRes = _inputResolution;
-        if (_inputLayer) {
-            newRes = _inputLayer.GetOutputShape();
-        }
-
-        if(reducedDepth != _oldReducedDepth ||
-            newRes != _inputResolution ||
-            IsInitialized() == false ||
-            _nodePositions == null ||
-            _oldFullDepth != fullDepth)
-        {
-            _inputResolution = newRes;
-            InitNodes();
-            _oldReducedDepth = reducedDepth;
-            _oldFullDepth = fullDepth;
-        }
-    }
-
-    /// <summary>
-    /// Initialize data representing nodes of the layer.
-    /// </summary>
-    private void InitNodes()
-    {
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
-
-        _nodePositions = new List<Vector3>();
-        for (int i = 0; i < reducedDepth; i++)
-        {
-            Vector3 node = filterPositions[i];
-            _nodePositions.Add(node);
-        }
-    }
-
-    /// <summary>
-    /// Update data representing nodes of the layer.
-    /// </summary>
-    private void UpdateNodes()
-    {
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
-
-        for (int i=0; i<_nodePositions.Count; i++)
-        {
-            _nodePositions[i] = filterPositions[i];
-        }
-    }
-
-    /// <summary>
-    /// Returns a List of Shapes representing the pixels of the feature maps.
-    /// </summary>
-    /// <returns></returns>
-    protected override List<Shape> GetPointShapes()
-    {
-        UpdateNodes();
-
-        List<Shape> pixelGrids = new List<Shape>();
-        for(int i=0; i<_nodePositions.Count; i++)
-        {
-            GridShape dummyGrid = new GridShape(_nodePositions[i], new Vector2Int(1, 1), new Vector2(0.0f, 0.0f));
-            pixelGrids.Add(dummyGrid);
-        }
-        return pixelGrids;
+        depth = 16;
     }
 
     /// <summary>
@@ -110,177 +25,50 @@ public class FCLayer : InputAcceptingLayer
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
+
+    public override List<List<GridShape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
     {
-        List<List<Shape>> list = new List<List<Shape>>();
+        List<List<GridShape>> list = new List<List<GridShape>>();
         list.Add(GetPointShapes());
         return list;
     }
 
-
-    override public void CalcMesh()
+    protected override void AddConvLines(List<Vector3> verts, List<Color> cols, List<float> activations, List<int> lineInds, Vector3 posDiff, Vector3 zPos)
     {
-        if(input == null)
+        List<List<GridShape>> inputFeaturemapOutFilterList = _inputLayer.GetLineStartShapes(this, allCalculations, this.convLocation);
+
+        for (int h = 0; h < _featureMaps.Count; h++)
         {
-            base.CalcMesh();
-            return;
+            //line endpoints
+            Vector3[] outFeaturemapVerts = GetFeatureMapPositions().ToArray();
+
+            ProcessInputFeatureMaps(outFeaturemapVerts,
+                inputFeaturemapOutFilterList,
+                verts,
+                cols, activations,
+                lineInds, posDiff, zPos);
         }
+    }
 
-        _mesh.subMeshCount = 2;
-
-
-        //POINTS
-        List<Vector3> verts = new List<Vector3>();
-        List<Color> cols = new List<Color>();
-        List<float> activations = new List<float>();
-        List<int> inds = new List<int>();
-
-        Vector3 posDiff = new Vector3(0, 0, -zOffset);
-        Vector3 zPos = new Vector3(0, 0, ZPosition());
-
-        AddNodes(verts, inds);
-        for (int i = 0; i < verts.Count; i++)
+    protected override List<int> AddOutFeaturemapVertsForConvGrid(
+        Vector3[] allOutputFeaturemapVerts,
+        int convGridIndex, List<Vector3> verts,
+        List<Color> cols,
+        Vector3 zPos)
+    {
+        List<int> outList = new List<int>();
+        foreach (Vector3 vert in allOutputFeaturemapVerts)
         {
-            if (_activationTensorPerEpoch.ContainsKey(epoch))
-            {
-
-                int[] index = Util.GetSampleMultiDimIndices(_activationTensorShape, i, GlobalManager.Instance.testSample);
-
-                Array activationTensor = _activationTensorPerEpoch[epoch];
-
-                float tensorVal = (float)activationTensor.GetValue(index);
-
-                activations.Add(tensorVal);
-
-                tensorVal *= pointBrightness;
-
-                cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
-
-                //cols.Add(Color.white);
-            }
-            else
-            {
-                cols.Add(Color.black);
-            }
-        }
-
-
-
-        if (showOriginalDepth)
-        {
-            AddFullResNodes(verts, inds);
-        }
-        int diff = verts.Count - cols.Count;
-        for (int i = 0; i < diff; i++)
-        {
+            verts.Add(vert + zPos);
             cols.Add(Color.black);
+            outList.Add(verts.Count - 1);
         }
+        return outList;
+    }
 
-        //LINES
-        Vector2Int inputShape = new Vector2Int(1, 1);
-
-        if(collapseInput != 1.0f)
-        {
-            inputShape = new Vector2Int(_inputLayer.GetOutputShape().x, _inputLayer.GetOutputShape().y);
-        }
-
-        //Input Layer Points, each inner List only contains one point
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, 0.0f); //TODO: Is this still correct after refactoring?
-
-        List<int> lineInds = new List<int>();
-
-        if (edgeBundle == 1f)
-        {
-            AddFullyBundledLines(verts, lineInds, inputFilterPoints);
-            diff = verts.Count - cols.Count;
-            for (int i = 0; i < diff; i++)
-            {
-                cols.Add(Color.black);
-            }
-        }
-        else
-        {
-
-            //for each of this Layers Points
-            for (int h = 0; h < _nodePositions.Count; h++)
-            {
-                //line endpoint
-                Vector3 end_vert = _nodePositions[h];
-                verts.Add(end_vert + zPos);
-                cols.Add(Color.black);
-
-                int end_ind = verts.Count - 1;
-
-                Vector3 edgeBundleCenter = GetEdgeBundleCenter(end_vert, edgeBundle);
-                int bundle_center_ind = 0;
-                if (edgeBundle > 0)
-                {
-
-                    verts.Add(edgeBundleCenter);
-                    cols.Add(Color.black);
-
-                    bundle_center_ind = verts.Count - 1;
-                }
-
-                //for each input feature map
-                for (int i = 0; i < inputFilterPoints.Count; i++)
-                {
-                    //for each input conv grid
-                    List<Shape> featureMapGrids = inputFilterPoints[i];
-                    for (int j = 0; j < featureMapGrids.Count; j++)
-                    {
-                        GridShape gridShape = (GridShape)featureMapGrids[j];
-                        //scale shape spacing by collapse input
-                        gridShape.spacing *= (1.0f - collapseInput);
-                        Vector3[] start_verts = gridShape.GetVertices(true);
-
-                        //for each conv point
-                        for (int k = 0; k < start_verts.Length; k++)
-                        {
-                            lineInds.Add(end_ind);
-                            if (edgeBundle > 0)
-                            {
-                                lineInds.Add(bundle_center_ind);
-                                lineInds.Add(bundle_center_ind);
-                            }
-
-                            verts.Add(start_verts[k] + zPos + posDiff);
-                            if (_tensorPerEpoch.ContainsKey(epoch))
-                            {
-                                Array tensor = _tensorPerEpoch[epoch];
-
-                                int[] index = { i*k, h };
-                                if (_inputLayer.GetType().Equals(typeof(FCLayer)))
-                                {
-                                    index[0] = j;
-                                }
-
-                                float activationMult = 1f;
-                                if (GlobalManager.Instance.multWeightsByActivations)
-                                    activationMult = activations[j];
-
-                                float tensorVal = (float)tensor.GetValue(index) * weightBrightness * activationMult;
-                                cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
-                            }
-                            else
-                            {
-                                cols.Add(Color.black);
-                            }
-
-                            lineInds.Add(verts.Count - 1);
-                        }
-                    }
-                }
-            }
-        }
-
-
-        _mesh.SetVertices(verts);
-        _mesh.SetColors(cols);
-        _mesh.SetIndices(inds.ToArray(), MeshTopology.Points, 0);
-        _mesh.SetIndices(lineInds.ToArray(), MeshTopology.Lines, 1);
-
-        Debug.Log("vertcount: " + verts.Count);
+    protected override Vector3 EndVert(Vector3[] endverts, int inputFilterGrid)
+    {
+        return endverts[0];
     }
 
     /// <summary>
@@ -289,21 +77,23 @@ public class FCLayer : InputAcceptingLayer
     /// <param name="verts"></param>
     /// <param name="lineInds"></param>
     /// <param name="inputFilterPoints"></param>
-    void AddFullyBundledLines(List<Vector3> verts, List<int> lineInds, List<List<Shape>> inputFilterPoints)
+    void AddFullyBundledLines(List<Vector3> verts, List<int> lineInds, List<List<GridShape>> inputFilterPoints)
     {
         Vector3 posDiff = new Vector3(0, 0, -zOffset);
         Vector3 zPos = new Vector3(0, 0, ZPosition());
 
-        Vector3 end_vert0 = _nodePositions[0];
+        List<Vector3> featureMapPositions = GetFeatureMapPositions();
+
+        Vector3 end_vert0 = featureMapPositions[0];
         Vector3 edgeBundleCenter = GetEdgeBundleCenter(end_vert0, 1f);
         verts.Add(edgeBundleCenter);
         int bundle_center_ind = verts.Count - 1;
 
         //for each of this Layers Points
-        for (int h = 0; h < _nodePositions.Count; h++)
+        for (int h = 0; h < featureMapPositions.Count; h++)
         {
             //line endpoint
-            Vector3 end_vert = _nodePositions[h];
+            Vector3 end_vert = featureMapPositions[h];
             verts.Add(end_vert + zPos);
 
             int end_ind = verts.Count - 1;
@@ -316,7 +106,7 @@ public class FCLayer : InputAcceptingLayer
         for (int i = 0; i < inputFilterPoints.Count; i++)
         {
             //for each input conv grid
-            List<Shape> featureMapGrids = inputFilterPoints[i];
+            List<GridShape> featureMapGrids = inputFilterPoints[i];
             for (int j = 0; j < featureMapGrids.Count; j++)
             {
                 GridShape gridShape = (GridShape)featureMapGrids[j];
@@ -366,6 +156,25 @@ public class FCLayer : InputAcceptingLayer
         }
     }
 
+
+    private List<Vector3> GetFeatureMapPositions()
+    {
+        List<Vector3> featureMapPositions = new List<Vector3>();
+
+        foreach(FeatureMap map in _featureMaps)
+        {
+            featureMapPositions.Add(map.GetPosition());
+        }
+
+        return featureMapPositions;
+    }
+
+    protected override void SetupFeaturemapResolution()
+    {
+        _featureMapResolution = new Vector2Int(1, 1);
+        _featureMapTheoreticalResolution = new Vector2Int(1, 1);
+    }
+
     /// <summary>
     /// helper to interpolate two vectors.
     /// </summary>
@@ -388,9 +197,9 @@ public class FCLayer : InputAcceptingLayer
     /// <returns></returns>
     private Vector3[] fullResLineVerts()
     {
-        int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(reducedDepth));
+        int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(depth));
 
-        LineShape line = new LineShape(CenterPosition(), fullDepth, filterSpread * (reducedDepthGridShape / (float)reducedDepth));
+        LineShape line = new LineShape(CenterPosition(), fullDepth, filterSpread * (reducedDepthGridShape / (float)depth));
         return line.GetVertices(false);
     }
 
@@ -401,11 +210,11 @@ public class FCLayer : InputAcceptingLayer
     private Vector3[] fullResCircleVerts()
     {
         List<Vector3> outVerts = new List<Vector3>();
-        int circleNum = Mathf.CeilToInt( fullDepth / (float)reducedDepth);
+        int circleNum = Mathf.CeilToInt( fullDepth / (float)depth);
 
         for(int i=0; i<circleNum; i++)
         {
-            CircleShape circle = new CircleShape(CenterPosition(), reducedDepth, filterSpread * 1.3f + i*2.0f*(filterSpread / 10.0f));
+            CircleShape circle = new CircleShape(CenterPosition(), depth, filterSpread * 1.3f + i*2.0f*(filterSpread / 10.0f));
             outVerts.AddRange(circle.GetVertices(false));
         }
 
@@ -427,7 +236,7 @@ public class FCLayer : InputAcceptingLayer
 
     public override Vector3Int GetOutputShape()
     {
-        return new Vector3Int(1, 1, reducedDepth);
+        return new Vector3Int(1, 1, depth);
     }
 
     public override void SetExpansionLevel(float level)
@@ -448,43 +257,8 @@ public class FCLayer : InputAcceptingLayer
         }
     }
 
-    public void SetTensorForEpoch(Array tensor, int epoch)
+    public override bool Is2dLayer()
     {
-        _tensorPerEpoch[epoch] = tensor;
-    }
-
-    public Array GetTensorForEpoch(int epoch)
-    {
-        return _tensorPerEpoch[epoch];
-    }
-
-    public void SetTensorShape(int[] tensorShape)
-    {
-        this._tensorShape = tensorShape;
-    }
-
-    public int[] GetTensorShape()
-    {
-        return _tensorShape;
-    }
-
-    public void SetActivationTensorForEpoch(Array tensor, int epoch)
-    {
-        _activationTensorPerEpoch[epoch] = tensor;
-    }
-
-    public Array GetActivationTensorForEpoch(int epoch)
-    {
-        return _activationTensorPerEpoch[epoch];
-    }
-
-    public void SetActivationTensorShape(int[] tensorShape)
-    {
-        this._activationTensorShape = tensorShape;
-    }
-
-    public int[] GetActivationTensorShape()
-    {
-        return _activationTensorShape;
+        return false;
     }
 }

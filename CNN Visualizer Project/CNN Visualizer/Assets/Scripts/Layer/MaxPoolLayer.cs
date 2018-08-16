@@ -5,8 +5,6 @@ using System;
 
 public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 {
-    private Vector2Int _oldStride;
-
     private Vector2Int _featureMapResolution;
     private Vector2 _featureMapTheoreticalResolution;
 
@@ -28,12 +26,12 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// <summary>
     /// Checks if parameters have been updated and reinitializes necessary data.
     /// </summary>
-    protected override void UpdateForChangedParams()
+    protected override void UpdateForChangedParams(bool topoChanged)
     {
-        base.UpdateForChangedParams();
+        base.UpdateForChangedParams(topoChanged);
 
         Vector2Int newRes = _featureMapResolution;
-        int newDepth = reducedDepth;
+        int newDepth = depth;
         if (_inputLayer) {
             newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, GetPadding());
             _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, GetPadding());
@@ -47,14 +45,14 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         }
 
         if(newRes != _featureMapResolution ||
-            newDepth != reducedDepth ||
+            newDepth != depth ||
             stride != _oldStride ||
-            IsInitialized() == false ||
+            HasInitializedMesh() == false ||
             _featureMaps == null)
         {
             _featureMapResolution = newRes;
 
-            reducedDepth = newDepth;
+            depth = newDepth;
             InitFeatureMaps();
             _oldStride = stride;
         }
@@ -67,10 +65,10 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// </summary>
     private void InitFeatureMaps()
     {
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions();
 
         _featureMaps = new List<FeatureMap>();
-        for (int i = 0; i < reducedDepth; i++)
+        for (int i = 0; i < depth; i++)
         {
             FeatureMap map = new FeatureMap(this, i); 
             _featureMaps.Add(map);
@@ -88,11 +86,11 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             return;
         }
 
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions();
 
         for (int i=0; i<_featureMaps.Count; i++)
         {
-            _featureMaps[i].UpdateValuesForInputParams(this);
+            _featureMaps[i].UpdateValuesForInputParams(this, false);
         } 
     }
 
@@ -100,11 +98,11 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// Returns a List of Shapes representing the pixels of the feature maps.
     /// </summary>
     /// <returns></returns>
-    protected override List<Shape> GetPointShapes()
+    protected override List<GridShape> GetPointShapes()
     {
         UpdateFeatureMaps();
 
-        List<Shape> pixelGrids = new List<Shape>();
+        List<GridShape> pixelGrids = new List<GridShape>();
         for(int i=0; i<_featureMaps.Count; i++)
         {
             pixelGrids.Add(_featureMaps[i].GetPixelGrid());
@@ -121,11 +119,11 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     /// <param name="stride"></param>
     /// <param name="allCalcs"></param>
     /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
+    public override List<List<GridShape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
     {
         UpdateFeatureMaps();
 
-        List<List<Shape>> filterGrids = new List<List<Shape>>();
+        List<List<GridShape>> filterGrids = new List<List<GridShape>>();
         for (int i = 0; i < _featureMaps.Count; i++)
         {
             filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs));
@@ -172,7 +170,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             }
         }
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations);
+        List<List<GridShape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations, -1); //TODO
 
         List<int> lineInds = new List<int>();
 
@@ -182,7 +180,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
         for (int h = 0; h < _featureMaps.Count; h++)
         {
             //line endpoints
-            GridShape inputGrid = (GridShape)_featureMaps[h].GetInputGrid(allCalculations);
+            GridShape inputGrid = (GridShape)_featureMaps[h].GetGridForInputEndpoints(allCalculations);
             Vector3[] end_verts = inputGrid.GetVertices(true);
 
             Vector3[] edgeBundleCenters = new Vector3[end_verts.Length];
@@ -193,7 +191,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
             }
 
             //for each input conv grid
-            List<Shape> featureMapGrids = inputFilterPoints[h];
+            List<GridShape> featureMapGrids = inputFilterPoints[h];
             for (int j = 0; j < featureMapGrids.Count; j++)
             {
                 GridShape gridShape = (GridShape)featureMapGrids[j];
@@ -241,7 +239,7 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
     
     public override Vector3Int GetOutputShape()
     {
-        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, reducedDepth);
+        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, depth);
     }
 
     public override Vector2Int Get2DOutputShape()
@@ -290,11 +288,16 @@ public class MaxPoolLayer : InputAcceptingLayer, I2DMapLayer
 
     public FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
     {
-        Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInputProperties info = new FeatureMapInputProperties();
         info.position = filterPositions[featureMapIndex];
         info.inputShape = _featureMapResolution;
         info.spacing = filterSpacing;
         return info;
+    }
+
+    public override bool Is2dLayer()
+    {
+        return true;
     }
 }

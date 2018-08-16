@@ -9,10 +9,8 @@ using System.Collections;
 
 public abstract class InputAcceptingLayer : Layer
 {
+    private GameObject _oldInput;
     public GameObject input;
-
-    public int reducedDepth = 4;
-    protected int _oldReducedDepth;
 
     [Range(0.0f, 1.0f)]
     public float filterSpread;
@@ -32,53 +30,101 @@ public abstract class InputAcceptingLayer : Layer
     [Range(0.0f, 1.0f)]
     public float lineXToZ;
 
-    public abstract void SetExpansionLevel(float level);
+    /// <summary>
+    /// feature map always refers to the layers' output
+    /// </summary>
+    protected Vector2Int _featureMapResolution;
+    /// <summary>
+    /// feature map always refers to the layers' output
+    /// </summary>
+    protected Vector2 _featureMapTheoreticalResolution;
 
-    protected override void UpdateForChangedParams()
+    public abstract void SetExpansionLevel(float level);
+    public abstract bool Is2dLayer();
+
+    protected override void UpdateForChangedParams(bool topoChanged)
+    {
+        base.UpdateForChangedParams(topoChanged);
+
+        if (!HasInputLayer())
+            return;
+
+        _inputLayer.UpdateFeatureMapsForOutputParams(this, topoChanged);
+    }
+
+    private bool HasInputLayer()
+    {
+        return (_inputLayer != null);
+    }
+
+    protected override void CheckAndHandleParamChanges()
+    {
+
+        if (CheckInputChanged_OneValidCall())
+        {
+            InputChanged();
+        }
+
+        base.CheckAndHandleParamChanges();
+    }
+
+    public override void InitIfUnitialized()
+    {
+        if (_initialized)
+            return;
+
+        base.InitIfUnitialized();
+
+        _initialized = true;
+    }
+
+    protected void InputChanged()
     {
         CheckAndHandleInputChange();
-        base.UpdateForChangedParams();
+
+        UpdateMeshTopoChanged();
     }
 
     protected void CheckAndHandleInputChange()
     {
         if (input != null)
         {
+
             Layer newInputLayer = input.GetComponent<Layer>();
-            if (!newInputLayer.IsInitialized())
+            if (!newInputLayer.HasInitializedMesh())
             {
-                newInputLayer.Init();
+                newInputLayer.InitMesh();
             }
-            if (_inputLayer != newInputLayer)
+
+            if (_inputLayer != null)
             {
-                if (_inputLayer != null)
-                {
-                    _inputLayer.RemoveObserver(this);
-                }
-                newInputLayer.AddObserver(this);
-                _inputLayer = newInputLayer;
+                _inputLayer.RemoveObserver(this);
+                _inputLayer.RemoveOutputLayer(this);
             }
+
+            newInputLayer.AddObserver(this);
+            newInputLayer.AddOuputLayer(this);
+            _inputLayer = newInputLayer;
+
         }
         else
         {
-            if (_inputLayer != null)
-                _inputLayer.RemoveObserver(this);
             _inputLayer = null;
         }
     }
 
     /// <summary>
-    /// Calculates the position of the nodes according to parameters.
+    /// Calculates the position of the Feature Maps according to parameters.
     /// </summary>
     /// <returns></returns>
-    protected Vector3[] GetInterpolatedNodePositions()
+    protected override Vector3[] GetInterpolatedFeatureMapPositions()
     {
-        int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(reducedDepth));
+        int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(depth));
         Vector3[] gridPositions = GridShape.ScaledUnitGrid(reducedDepthGridShape, reducedDepthGridShape, new Vector3(0, 0, 0), filterSpread);
-        Vector3[] linePositionsX = LineShape.ScaledUnitLine(reducedDepth, new Vector3(0, 0, 0), new Vector3(1, 0, 0), filterSpread * (reducedDepthGridShape / (float)reducedDepth));
-        Vector3[] linePositionsZ = LineShape.ScaledUnitLine(reducedDepth, new Vector3(0, 0, 0), new Vector3(0, 0, 1), filterSpread * (reducedDepthGridShape / (float)reducedDepth));
+        Vector3[] linePositionsX = LineShape.ScaledUnitLine(depth, new Vector3(0, 0, 0), new Vector3(1, 0, 0), filterSpread * (reducedDepthGridShape / (float)depth));
+        Vector3[] linePositionsZ = LineShape.ScaledUnitLine(depth, new Vector3(0, 0, 0), new Vector3(0, 0, 1), filterSpread * (reducedDepthGridShape / (float)depth));
         Vector3[] linePositions = Shape.InterpolateShapes(linePositionsX, linePositionsZ, lineXToZ);
-        Vector3[] circlePositions = CircleShape.ScaledUnitCircle(reducedDepth, new Vector3(0, 0, 0), filterSpread);
+        Vector3[] circlePositions = CircleShape.ScaledUnitCircle(depth, new Vector3(0, 0, 0), filterSpread);
 
         Vector3[] filterPositions = null;
 
@@ -106,4 +152,29 @@ public abstract class InputAcceptingLayer : Layer
         originalPoint.z = zPos;
         return center = edgeBundle * center + (1.0f - edgeBundle) * originalPoint;
     }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckInputChanged_OneValidCall()
+    {
+        if (input != _oldInput)
+        {
+            _oldInput = input;
+            return true;
+        }
+        return false;
+    }
+
+    public override FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
+    {
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions(); //not ideal  recalculating this everytime, but should have minor performance impact
+        FeatureMapInputProperties info = new FeatureMapInputProperties();
+        info.position = filterPositions[featureMapIndex];
+        info.inputShape = _featureMapResolution;
+        info.spacing = filterSpacing;
+        return info;
+    }
+
 }

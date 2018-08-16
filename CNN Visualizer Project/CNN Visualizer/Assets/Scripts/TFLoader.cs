@@ -312,7 +312,7 @@ public class TFLoader : MonoBehaviour {
                     GameObject inst = Instantiate(go);
                     ConvLayer convLayer = inst.GetComponent<ConvLayer>();
                     convLayer.convShape = new Vector2Int(l.weightShape[0], l.weightShape[1]);
-                    convLayer.reducedDepth = l.weightShape[3];
+                    convLayer.depth = l.weightShape[3];
                     convLayer.fullDepth = l.weightShape[3];
                     convLayer.input = input;
                     convLayer.filterSpread = 1.0f;
@@ -357,13 +357,13 @@ public class TFLoader : MonoBehaviour {
                     FCLayer fcLayer = inst.GetComponent<FCLayer>();
                     fcLayer.input = input;
                     fcLayer.filterSpacing = 0.025f;
-                    fcLayer.reducedDepth = l.weightShape[1];
+                    fcLayer.depth = l.weightShape[1];
                     fcLayer.fullDepth = l.weightShape[1];
                     
                     //TODO: here loading is reducing non output fc layers automatically by 4
                     if (!l.name.Contains("out"))
                     {
-                        fcLayer.reducedDepth = l.weightShape[1];
+                        fcLayer.depth = l.weightShape[1];
 
                     }else
                     {
@@ -374,10 +374,10 @@ public class TFLoader : MonoBehaviour {
                         fcLayer.collapseInput = 1f;
                     }
                     //fcLayer.edgeBundle = 1.0f;
-                    fcLayer.SetTensorShape(l.weightShape);
+                    fcLayer.SetWeightTensorShape(l.weightShape);
                     for (int i = 0; i < l.weightTensors.Count; i++)
                     {
-                        fcLayer.SetTensorForEpoch(l.weightTensors[i], i);
+                        fcLayer.SetWeightTensorForEpoch(l.weightTensors[i], i);
                     }
 
                     fcLayer.SetActivationTensorShape(l.activationShape);

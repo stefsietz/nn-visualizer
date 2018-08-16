@@ -30,7 +30,7 @@ public class GridShape : Shape
         return new GridShape(pos, this.resolution, spacing);
     }
 
-    protected override void InitVerts()
+    public override void InitVerts()
     {
         _verts = new Vector3[resolution.x * resolution.y];
         for (int i=0; i<_verts.Length; i++)

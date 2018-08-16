@@ -274,3 +274,7 @@ C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Vi
 C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\obj\Release\Assembly-CSharp.csproj.CopyComplete
 C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\obj\Release\Assembly-CSharp.dll
 C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\obj\Release\Assembly-CSharp.pdb
+C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\Temp\bin\Release\Castle.Core.dll
+C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\Temp\bin\Release\NSubstitute.dll
+C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\Temp\bin\Release\System.Threading.Tasks.Extensions.dll
+C:\Users\Stefan\Desktop\cnn vis test\nn-visualizer\CNN Visualizer Project\CNN Visualizer\Temp\bin\Release\System.Threading.Tasks.Extensions.xml

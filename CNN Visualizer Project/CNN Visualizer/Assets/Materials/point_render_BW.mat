@@ -8,7 +8,7 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: point_render_BW
   m_Shader: {fileID: 4800000, guid: 9cee26053a0ab8a44ac84544f3acc612, type: 3}
-  m_ShaderKeywords: _USEBLUEREDCMAP_ON
+  m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -73,7 +73,7 @@ Material:
     - _ZWrite: 1
     - _squarePixels: 0
     - _totalVerts: 363
-    - _useBlueRedCmap: 1
+    - _useBlueRedCmap: 0
     - _width: 0.054
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

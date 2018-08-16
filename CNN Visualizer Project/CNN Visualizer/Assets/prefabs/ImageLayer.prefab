@@ -97,13 +97,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e4841c31ac57204ba3cf1d3567bb4f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  convShape: {x: 0, y: 0}
+  depth: 3
+  stride: {x: 0, y: 0}
+  dilution: {x: 0, y: 0}
+  padding: 0
   pointBrightness: 1
   weightBrightness: 1
   zOffset: 1
+  yOffset: 0
   epoch: 0
   showOriginalDepth: 0
   fullResolution: {x: 224, y: 224}
-  depth: 3
   reducedResolution: {x: 11, y: 11}
   spread: 1
   pixelSpacing: 0.05

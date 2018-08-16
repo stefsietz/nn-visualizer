@@ -75,9 +75,15 @@
     <Compile Include="Assets\Scripts\Shapes\Shape.cs" />
     <Compile Include="Assets\Scripts\TFLoader.cs" />
     <Compile Include="Assets\Scripts\Util.cs" />
+    <None Include="Assets\Packages\System.Threading.Tasks.Extensions.4.3.0\dotnet_library_license.txt" />
     <None Include="Assets\Packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.xml" />
     <None Include="Assets\Shaders\ColoredSphere.shader" />
+    <None Include="Assets\Packages\Castle.Core.4.2.0\readme.txt" />
+    <None Include="Assets\Packages\System.Threading.Tasks.Extensions.4.3.0\lib\netstandard1.0\System.Threading.Tasks.Extensions.xml" />
     <None Include="Assets\Shaders\ColoredLine.shader" />
+    <None Include="Assets\Packages\System.Threading.Tasks.Extensions.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Threading.Tasks.Extensions.xml" />
+    <None Include="Assets\Packages\Castle.Core.4.2.0\ASL - Apache Software Foundation License.txt" />
+    <None Include="Assets\Packages\System.Threading.Tasks.Extensions.4.3.0\ThirdPartyNotices.txt" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
@@ -282,8 +288,35 @@
     <Reference Include="UnityEngine.SpatialTracking">
       <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/UnitySpatialTracking/RuntimeEditor/UnityEngine.SpatialTracking.dll</HintPath>
     </Reference>
+    <Reference Include="Castle.Core">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/Castle.Core.4.2.0/lib/net35/Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.Core">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/Castle.Core.4.2.0/lib/net40/Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.Core">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/Castle.Core.4.2.0/lib/net45/Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.Core">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/Castle.Core.4.2.0/lib/netstandard1.3/Castle.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/Newtonsoft.Json.11.0.2/lib/net45/Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NSubstitute">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/NSubstitute.3.1.0/lib/net45/NSubstitute.dll</HintPath>
+    </Reference>
+    <Reference Include="NSubstitute">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/NSubstitute.3.1.0/lib/net46/NSubstitute.dll</HintPath>
+    </Reference>
+    <Reference Include="NSubstitute">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/NSubstitute.3.1.0/lib/netstandard1.3/NSubstitute.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/System.Threading.Tasks.Extensions.4.3.0/lib/netstandard1.0/System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>C:/Users/Stefan/Desktop/cnn vis test/nn-visualizer/CNN Visualizer Project/CNN Visualizer/Assets/Packages/System.Threading.Tasks.Extensions.4.3.0/lib/portable-net45+win8+wp8+wpa81/System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Analytics">
       <HintPath>C:/Users/Stefan/AppData/Local/Unity/cache/packages/packages.unity.com/com.unity.analytics@2.0.16/UnityEngine.Analytics.dll</HintPath>

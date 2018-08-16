@@ -49,7 +49,7 @@ public class GlobalManager : MonoBehaviour
         {
 
             l.pointBrightness = value;
-            l.UpdateMesh();
+            l.UpdateMeshTopoUnchanged();
         }
     }
 
@@ -62,7 +62,7 @@ public class GlobalManager : MonoBehaviour
             if (!l.GetType().Equals(typeof(ImageLayer)))
             {
                 l.weightBrightness = value;
-                l.UpdateMesh();
+                l.UpdateMeshTopoUnchanged();
             }
         }
     }
@@ -77,7 +77,7 @@ public class GlobalManager : MonoBehaviour
             {
                 InputAcceptingLayer cast_l = (InputAcceptingLayer)l;
                 cast_l.SetExpansionLevel(value);
-                cast_l.UpdateMesh();
+                cast_l.UpdateMeshTopoChanged();
             }
         }
     }
@@ -88,7 +88,7 @@ public class GlobalManager : MonoBehaviour
 
         foreach (Layer l in layers)
         {
-            l.UpdateMesh();
+            l.UpdateMeshTopoChanged();
         }
     }
 
@@ -120,7 +120,7 @@ public class GlobalManager : MonoBehaviour
 
         foreach (Layer l in orderedLayers)
         {
-            l.UpdateMesh();
+            l.UpdateMeshTopoUnchanged();
         }
     }
 
@@ -214,7 +214,7 @@ public class GlobalManager : MonoBehaviour
         foreach(ConvLayer l in GetAllConvLayers())
         {
             l.fullResHeight = height;
-            l.UpdateMesh();
+            l.UpdateMeshTopoUnchanged();
         }
     }
 

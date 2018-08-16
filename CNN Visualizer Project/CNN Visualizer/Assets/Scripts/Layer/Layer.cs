@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 // Runtime code here
 #if UNITY_EDITOR
@@ -10,82 +11,22 @@ using System.Collections.Generic;
 [RequireComponent(typeof(MeshFilter))]
 
 /// Base class for the layer component
-public abstract class Layer : MonoBehaviour
+public abstract class Layer : MonoBehaviour, I2DMapLayer
 {
-    public delegate void OnTopologyChangeDelegate();
-    public event OnTopologyChangeDelegate OnTopologyChange;
-
     //TODO: these should be more class specific
     protected Vector2Int _oldConvShape;
-    public Vector2Int convShape
-    {
-        get
-        {
-            return _oldConvShape;
-        }
-        set
-        {
-            if (_oldConvShape == value)
-                return;
+    public Vector2Int convShape;
 
-            _oldConvShape = value;
-
-            RaiseOnTopologyChange();
-        }
-    }
+    public int depth = 4;
+    protected int _oldDepth;
 
     protected Vector2Int _oldStride = new Vector2Int(1, 1);
-    public Vector2Int stride
-    {
-        get
-        {
-            return _oldStride;
-        }
-        set
-        {
-            if (_oldStride == value)
-                return;
-
-            _oldStride = value;
-
-            RaiseOnTopologyChange();
-        }
-    }
+    public Vector2Int stride;
     protected Vector2Int _oldDilution = new Vector2Int(1, 1);
-    public Vector2Int dilution
-    {
-        get
-        {
-            return _oldDilution;
-        }
-        set
-        {
-            if (_oldDilution == value)
-                return;
-
-            _oldDilution = value;
-
-            RaiseOnTopologyChange();
-        }
-    }
+    public Vector2Int dilution;
 
     protected bool _oldPadding = true;
-    public bool padding
-    {
-        get
-        {
-            return _oldPadding;
-        }
-        set
-        {
-            if (_oldPadding == value)
-                return;
-
-            _oldPadding = value;
-
-            RaiseOnTopologyChange();
-        }
-    }
+    public bool padding;
 
     [Range(0.0f, 5.0f)]
     public float pointBrightness = 1.0f;
@@ -96,11 +37,15 @@ public abstract class Layer : MonoBehaviour
     [Range(0.0f, 5.0f)]
     public float zOffset = 1.0f;
 
+    [Range(-5.0f, 5.0f)]
+    public float yOffset = 0f;
+
     protected Layer _inputLayer;
     protected Mesh _mesh;
     protected Renderer _renderer;
 
-    private bool _initialized = false;
+    private bool _initializedMesh = false;
+    protected bool _initialized = false;
 
     private List<Layer> _observers = new List<Layer>();
 
@@ -110,40 +55,130 @@ public abstract class Layer : MonoBehaviour
 
     public bool showOriginalDepth = false;
 
-    protected abstract List<Shape> GetPointShapes();
-    public abstract List<List<Shape>> GetLineStartShapes(InputAcceptingLayer ouputLayer, float allCalcs);
+    protected List<FeatureMap> _featureMaps;
+    protected abstract List<GridShape> GetPointShapes();
     public abstract Vector3Int GetOutputShape();
+    protected abstract Vector3[] GetInterpolatedFeatureMapPositions();
 
-    public Layer()
-    {
-        OnTopologyChange += new OnTopologyChangeDelegate(UpdateForChangedParams);
-    }
 
-    protected void RaiseOnTopologyChange()
-    {
-        if (OnTopologyChange != null)
-            OnTopologyChange();
-    }
-
-    public virtual void Init()
+    /// <summary>
+    /// Initialize stuff. Replacement for constructor, checks if already initialized.
+    /// </summary>
+    public virtual void InitIfUnitialized()
     {
         if (_initialized)
             return;
 
+        _renderer = GetComponent<Renderer>();
+
+        if (!HasInitializedMesh())
+            InitMesh();
+
+        InitFeatureMapsForInputParams();
+
+        _initialized = true;
+    }
+
+/// <summary>
+/// Initialize Mesh, client should check
+/// </summary>
+    public virtual void InitMesh()
+    {
         MeshFilter mf = GetComponent<MeshFilter>();
         Mesh mesh = new Mesh();
         mf.sharedMesh = mesh;
         _mesh = mesh;
         _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-        _initialized = true;
+        _initializedMesh = true;
+    }
 
-        UpdateMesh();
+    /// <summary>
+    /// Initializes feature map List according to this Layers input params (depends only on this layers properties).
+    /// </summary>
+    protected virtual void InitFeatureMapsForInputParams()
+    {
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions();
+
+        _featureMaps = new List<FeatureMap>();
+        for (int i = 0; i < depth; i++)
+        {
+            FeatureMap map = new FeatureMap(this, i);
+            _featureMaps.Add(map);
+        }
+
+    }
+
+    /// <summary>
+    /// Updates feature map list according to new Layer input parameters  (depends only on this layers properties).
+    /// </summary>
+    protected virtual void UpdateFeatureMapsForInputParams(bool topoChanged)
+    {
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions();
+
+        for (int i = 0; i < _featureMaps.Count; i++)
+        {
+            _featureMaps[i].UpdateValuesForInputParams(this, topoChanged);
+        }
+    }
+
+
+    /// <summary>
+    /// call after adding output layer or requesting output points of this layer with changed topology
+    /// </summary>
+    public virtual void InitFeatureMapsForOutputParams(InputAcceptingLayer outputLayer)
+    {
+        foreach (FeatureMap featureMap in _featureMaps)
+        {
+            featureMap.AddOutputLayer(outputLayer);
+        }
+    }
+
+    /// <summary>
+    /// call when requesting output points of this layer without changed topology
+    /// </summary>
+    public virtual void UpdateFeatureMapsForOutputParams(InputAcceptingLayer outputLayer, bool topoChanged)
+    {
+        foreach (FeatureMap featureMap in _featureMaps)
+        {
+            featureMap.UpdateForOutputLayer(outputLayer, topoChanged);
+        }
+    }
+
+    private void RemoveOutputLayerFromFeaturemaps(InputAcceptingLayer outputLayer)
+    {
+        foreach (FeatureMap featureMap in _featureMaps)
+        {
+            featureMap.RemoveOutputLayer(outputLayer);
+        }
+    }
+
+    /// <summary>
+    /// Calculates and returns the positions of the line start points (for the CalcMesh() function). Gets Called by a Layer that is connected to this Layers output.
+    /// </summary>
+    /// <param name="convShape">Shape of the Conv operation of the next Layer</param>
+    /// <param name="outputShape">Output Shape</param>
+    /// <param name="theoreticalOutputShape"></param>
+    /// <param name="stride"></param>
+    /// <param name="allCalcs"></param>
+    /// <returns></returns>
+    public virtual List<List<GridShape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
+    {
+        UpdateFeatureMapsForInputParams(true);
+
+        List<List<GridShape>> filterGrids = new List<List<GridShape>>();
+        for (int i = 0; i < _featureMaps.Count; i++)
+        {
+            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs, convLocation));
+        }
+        return filterGrids;
     }
 
     protected void Start()
     {
-        Init();
+        InitIfUnitialized();
+
+        CheckAndHandleParamChanges();
     }
 
     /// <summary>
@@ -151,34 +186,85 @@ public abstract class Layer : MonoBehaviour
     /// </summary>
     protected void OnValidate()
     {
-        _renderer = GetComponent<Renderer>();
-        Init();
-        UpdateMesh();
+        InitIfUnitialized();
+
+        CheckAndHandleParamChanges();
     }
 
-    public virtual void UpdateMesh()
+    public void OnInputParamChange(bool topoChanged)
     {
-        UpdateForChangedParams();
-
-        if (_mesh != null)
+        if (topoChanged)
         {
-            _mesh.Clear();
-            CalcMesh();
+            UpdateMeshTopoChanged();
         }
-        NotifyObservers();
+        else
+        {
+            UpdateMeshTopoUnchanged();
+        }
     }
 
-    protected virtual void UpdateForChangedParams()
+    protected virtual void CheckAndHandleParamChanges()
     {
+        if (CheckTopologyChanged_OneValidCall())
+        {
+            UpdateMeshTopoChanged();
+        } else
+        {
+            UpdateMeshTopoUnchanged();
+        }
+    }
+   
+
+    /// <summary>
+    /// Gets called once per frame
+    /// </summary>
+    // Update is called once per frame
+    void Update()
+    {
+        //UpdateMesh();
+    }
+
+    public virtual void UpdateMeshTopoChanged()
+    {
+        UpdateForChangedParams(true);
+
+        RebuildMeshAndNotifyObservers(true);
+    }
+
+    public virtual void UpdateMeshTopoUnchanged()
+    {
+        UpdateForChangedParams(false);
+
+        RebuildMeshAndNotifyObservers(false);
+    }
+
+    private void RebuildMeshAndNotifyObservers(bool topoChanged)
+    {
+        _mesh.Clear();
+        CalcMesh();
+
+        NotifyObservers(topoChanged);
+    }
+
+    protected virtual void UpdateForChangedParams(bool topoChanged)
+    {
+        UpdateFeatureMapsForInputParams(topoChanged);
+
     }
 
     /// <summary>
     /// Recursively returns the right ZOffset based on input layers.
     /// </summary>
     /// <returns>Z Base Position</returns>
-    protected float ZPosition()
+    protected virtual float ZPosition()
     {
         if (_inputLayer != null) return _inputLayer.ZPosition() + zOffset;
+        else return 0;
+    }
+
+    protected virtual float YPosition()
+    {
+        if (_inputLayer != null) return _inputLayer.YPosition() + yOffset;
         else return 0;
     }
 
@@ -188,7 +274,7 @@ public abstract class Layer : MonoBehaviour
     /// <returns></returns>
     public Vector3 CenterPosition()
     {
-        return new Vector3(0, 0, ZPosition());
+        return new Vector3(0, YPosition(), ZPosition());
     }
 
     /// <summary>
@@ -234,7 +320,7 @@ public abstract class Layer : MonoBehaviour
     /// <param name="inds"></param>
     protected virtual void AddNodes(List<Vector3> verts, List<int> inds)
     {
-        Vector3 zPos = new Vector3(0, 0, ZPosition());
+        Vector3 zPos = CenterPosition();
 
         foreach (Shape shape in GetPointShapes())
         {
@@ -249,16 +335,14 @@ public abstract class Layer : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// Gets called once per frame
-    /// </summary>
-    // Update is called once per frame
-    void Update()
+    public virtual void AddOuputLayer(InputAcceptingLayer outputLayer)
     {
-        if (!_initialized)
-        {
-            Init();
-        }
+        InitFeatureMapsForOutputParams(outputLayer);
+    }
+
+    public virtual void RemoveOutputLayer(InputAcceptingLayer outputLayer)
+    {
+        RemoveOutputLayerFromFeaturemaps(outputLayer);
     }
 
     /// <summary>
@@ -288,18 +372,11 @@ public abstract class Layer : MonoBehaviour
     /// <summary>
     /// Notifies obsevers that a parameter change has occured.
     /// </summary>
-    public void NotifyObservers()
+    public void NotifyObservers(bool topoChanged)
     {
         foreach(Layer observer in _observers)
         {
-            if (observer != null)
-            {
-                if(observer._mesh == null)
-                {
-                    observer.Init();
-                }
-                observer.OnValidate();
-            }
+            observer.OnInputParamChange(topoChanged);
         }
     }
 
@@ -322,13 +399,101 @@ public abstract class Layer : MonoBehaviour
         OnValidate();
     }
 
-    public bool IsInitialized()
+    public bool HasInitializedMesh()
     {
-        return _initialized;
+        return _initializedMesh;
     }
 
-    public virtual List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected virtual bool CheckTopologyChanged_OneValidCall()
     {
-        return GetLineStartShapes(outputLayer, allCalcs);
+        bool topologyChanged = false;
+
+        topologyChanged |= CheckConvShapeChanged_OneValidCall();
+        topologyChanged |= CheckStrideChanged_OneValidCall();
+        topologyChanged |= CheckDilutionChanged_OneValidCall();
+        topologyChanged |= CheckPaddingChanged_OneValidCall();
+        topologyChanged |= CheckDepthChanged_OneValidCall();
+
+        return topologyChanged;
+    }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckConvShapeChanged_OneValidCall()
+    {
+        if (convShape != _oldConvShape)
+        {
+            _oldConvShape = convShape;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckStrideChanged_OneValidCall()
+    {
+        if (stride != _oldStride)
+        {
+            _oldStride = stride;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckDilutionChanged_OneValidCall()
+    {
+        if (dilution != _oldDilution)
+        {
+            _oldDilution = dilution;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckPaddingChanged_OneValidCall()
+    {
+        if (padding != _oldPadding)
+        {
+            _oldPadding = padding;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// checks param and sets old to new, only call once for each change!
+    /// </summary>
+    /// <returns></returns>
+    protected bool CheckDepthChanged_OneValidCall()
+    {
+        if (depth != _oldDepth)
+        {
+            _oldDepth = depth;
+            return true;
+        }
+        return false;
+    }
+
+
+    public virtual FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
+    {
+        return new FeatureMapInputProperties();
     }
 }

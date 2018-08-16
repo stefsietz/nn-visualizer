@@ -6,34 +6,10 @@ using System;
 /// <summary>
 /// Represents a Convolutional Layer of a CNN.
 /// </summary>
-public class ConvLayer : InputAcceptingLayer, I2DMapLayer
+public class ConvLayer : InputAcceptingLayer
 {
-    private int _oldFullDepth = 64;
-    public int fullDepth
-    {
-        get
-        {
-            return _oldFullDepth;
-        }
-        set
-        {
-            if (_oldFullDepth == value)
-                return;
-
-            _oldFullDepth = value;
-
-            RaiseOnTopologyChange();
-        }
-    }
-
-    /// <summary>
-    /// feature map always refers to the layers' output
-    /// </summary>
-    private Vector2Int _featureMapResolution;
-    /// <summary>
-    /// feature map always refers to the layers' output
-    /// </summary>
-    private Vector2 _featureMapTheoreticalResolution;
+    protected int _oldFullDepth = 64;
+    public int fullDepth;
 
     /// <summary>
     /// 
@@ -51,13 +27,11 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
     public float nodeSize;
 
-    private List<FeatureMap> _featureMaps;
+    protected Dictionary<int, Array> _weightTensorPerEpoch = new Dictionary<int, Array>();
+    protected int[] _weightTensorShape = new int[4];
 
-    private Dictionary<int, Array> _weightTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] _weightTensorShape = new int[4];
-
-    private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
-    private int[] _activationTensorShape = new int[4];
+    protected Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
+    protected int[] _activationTensorShape = new int[4];
 
     public ConvLayer()
     {
@@ -68,70 +42,36 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
     /// <summary>
     /// Checks if parameters have been updated and reinitializes necessary data.
     /// </summary>
-    protected override void UpdateForChangedParams()
-    {
-        base.UpdateForChangedParams();
-
-        Vector2Int newRes = _featureMapResolution;
-        if (_inputLayer) {
-            newRes = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
-            _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
-        }
-
-        if( newRes != _featureMapResolution ||
-            IsInitialized() == false ||
-            _featureMaps == null)
-        {
-            _featureMapResolution = newRes;
-
-            InitFeatureMaps();
-        }
-    }
-
-    /// <summary>
-    /// Initializes feature map List.
-    /// </summary>
-    private void InitFeatureMaps()
-    {
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
-
-        _featureMaps = new List<FeatureMap>();
-        for (int i = 0; i < reducedDepth; i++)
-        {
-            FeatureMap map = new FeatureMap(this, i); 
-            _featureMaps.Add(map);
-        }
-
-    }
-
-    /// <summary>
-    /// Updates feature map list according to new parameters.
-    /// </summary>
-    private void UpdateFeatureMaps()
+    protected override void UpdateForChangedParams(bool topoChanged)
     {
         if (_featureMaps == null)
         {
-            InitFeatureMaps();
-            return;
+            InitFeatureMapsForInputParams();
         }
 
-        Vector3[] filterPositions = GetInterpolatedNodePositions();
-
-        for (int i=0; i<_featureMaps.Count; i++)
+        if (_inputLayer)
         {
-            _featureMaps[i].UpdateValuesForInputParams(this);
+            SetupFeaturemapResolution();
         }
+
+        base.UpdateForChangedParams(topoChanged);
+    }
+
+    protected virtual void SetupFeaturemapResolution()
+    {
+        _featureMapResolution = FeatureMap.GetFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
+        _featureMapTheoreticalResolution = FeatureMap.GetTheoreticalFloatFeatureMapShapeFromInput(_inputLayer.Get2DOutputShape(), convShape, stride, padding ? GetPadding() : new Vector2Int(0, 0));
     }
 
     /// <summary>
     /// Returns a List of Shapes representing the pixels of the feature maps.
     /// </summary>
     /// <returns></returns>
-    protected override List<Shape> GetPointShapes()
+    protected override List<GridShape> GetPointShapes()
     {
-        UpdateFeatureMaps();
+        UpdateFeatureMapsForInputParams(true);
 
-        List<Shape> pixelGrids = new List<Shape>();
+        List<GridShape> pixelGrids = new List<GridShape>();
         for(int i=0; i<_featureMaps.Count; i++)
         {
             pixelGrids.Add(_featureMaps[i].GetPixelGrid());
@@ -139,43 +79,9 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         return pixelGrids;
     }
 
-    /// <summary>
-    /// Calculates and returns the positions of the line start points (for the CalcMesh() function). Gets Called by a Layer that is connected to this Layers output.
-    /// </summary>
-    /// <param name="convShape">Shape of the Conv operation of the next Layer</param>
-    /// <param name="outputShape">Output Shape</param>
-    /// <param name="theoreticalOutputShape"></param>
-    /// <param name="stride"></param>
-    /// <param name="allCalcs"></param>
-    /// <returns></returns>
-    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
-    {
-        UpdateFeatureMaps();
-
-        List<List<Shape>> filterGrids = new List<List<Shape>>();
-        for (int i = 0; i < _featureMaps.Count; i++)
-        {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs));
-        }
-        return filterGrids;
-    }
-
-    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs, int convLocation)
-    {
-        UpdateFeatureMaps();
-
-        List<List<Shape>> filterGrids = new List<List<Shape>>();
-        for (int i = 0; i < _featureMaps.Count; i++)
-        {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs, convLocation));
-        }
-        return filterGrids;
-    }
-
     override public void CalcMesh()
     {
-        Debug.Log(name);
-        if(input == null)
+        if (input == null)
         {
             base.CalcMesh();
             return;
@@ -190,8 +96,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         List<int> lineInds = new List<int>();
         List<int> polyInds = new List<int>();
 
-        Vector3 posDiff = new Vector3(0, 0, -zOffset);
-        Vector3 zPos = new Vector3(0, 0, ZPosition());
+        Vector3 posDiff = new Vector3(0, -yOffset, -zOffset);
+        Vector3 zPos = CenterPosition();
 
         AddNodes(verts, inds);
         for (int i = 0; i < verts.Count; i++)
@@ -220,79 +126,10 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         }
 
 
-        List<List<Shape>> inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations);
-        inputFilterPoints = _inputLayer.GetLineStartShapes(this, allCalculations, this.convLocation);
-
         //TODO: reuse generated vert positions
 
         //for each output feature map
-        for (int h = 0; h < _featureMaps.Count; h++)
-        {
-            //line endpoints
-            GridShape inputGrid = (GridShape)_featureMaps[h].GetInputGrid(allCalculations);
-            Vector3[] end_verts = inputGrid.GetVertices(true);
-
-            Vector3[] edgeBundleCenters = new Vector3[end_verts.Length];
-
-            for(int i = 0; i<edgeBundleCenters.Length; i++)
-            {
-                edgeBundleCenters[i] = GetEdgeBundleCenter(end_verts[i], edgeBundle);
-            }
-
-
-            //for each input feature map
-            for (int i = 0; i < inputFilterPoints.Count; i++)
-            {
-                //for each input conv grid
-                List<Shape> featureMapGrids = inputFilterPoints[i];
-                for (int j = 0; j < featureMapGrids.Count; j++)
-                {
-                    GridShape gridShape = (GridShape)featureMapGrids[j];
-                    Vector3[] start_verts = gridShape.GetVertices(true);
-
-                    verts.Add(end_verts[j] + zPos);
-                    cols.Add(Color.black);
-                    int start_ind = verts.Count - 1;
-                    int bundle_center_ind = 0;
-                    if (edgeBundle > 0)
-                    {
-                        verts.Add(edgeBundleCenters[j]);
-                        cols.Add(Color.black);
-                        bundle_center_ind = verts.Count - 1;
-                    }
-                    for (int k = 0; k < start_verts.Length; k++)
-                    {
-                        verts.Add(start_verts[k] + zPos + posDiff);
-
-                        if (_weightTensorPerEpoch.ContainsKey(epoch)){
-                            Array tensor = _weightTensorPerEpoch[epoch];
-                            int kernelInd1 = k % convShape.x;
-                            int kernelInd2 = k / convShape.y;
-
-                            int[] index = { kernelInd1, kernelInd2, 0, h };
-
-                            float activationMult = 1f;
-                            if (allCalculations > 0  && GlobalManager.Instance.multWeightsByActivations)
-                                activationMult = activations[j];
-
-                            float tensorVal = (float)tensor.GetValue(index) * weightBrightness * activationMult;
-                            cols.Add(new Color(tensorVal, tensorVal, tensorVal, 1f));
-                        } else
-                        {
-                            cols.Add(Color.black);
-                        }
-
-                        lineInds.Add(start_ind);
-                        if (edgeBundle > 0)
-                        {
-                            lineInds.Add(bundle_center_ind);
-                            lineInds.Add(bundle_center_ind);
-                        }
-                        lineInds.Add(verts.Count - 1);
-                    }
-                }
-            }
-        }
+        AddConvLines(verts, cols, activations, lineInds, posDiff, zPos);
 
         if (showOriginalDepth)
         {
@@ -305,7 +142,7 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
 
         //fill with dummy colors
         int diff = verts.Count - cols.Count;
-        Debug.Log("diff " + diff+ " polyInds " + polyInds.Count + " inds " + inds.Count + " lineInds " + lineInds.Count  + " cols " + cols.Count + " verts " + verts.Count);
+
         for (int i = 0; i < diff; i++)
         {
             cols.Add(Color.white);
@@ -318,9 +155,125 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         _mesh.SetIndices(polyInds.ToArray(), MeshTopology.Triangles, 2);
     }
 
+    protected virtual void AddConvLines(List<Vector3> verts, List<Color> cols, List<float> activations, List<int> lineInds, Vector3 posDiff, Vector3 zPos)
+    {
+        List<List<GridShape>> inputFeaturemapOutFilterList = _inputLayer.GetLineStartShapes(this, allCalculations, this.convLocation);
+
+        for (int h = 0; h < _featureMaps.Count; h++)
+        {
+            //line endpoints
+            GridShape outFeaturemapInputGrid = (GridShape)_featureMaps[h].GetGridForInputEndpoints(allCalculations);
+            Vector3[] outFeaturemapVerts = outFeaturemapInputGrid.GetVertices(true);
+
+            ProcessInputFeatureMaps(outFeaturemapVerts,
+                inputFeaturemapOutFilterList,
+                verts,
+                cols, activations,
+                lineInds, posDiff, zPos);
+        }
+    }
+
+    protected void ProcessInputFeatureMaps(Vector3[] outFeaturemapVerts,
+        List<List<GridShape>> inputFeaturemapNestedList,
+        List<Vector3> verts,
+        List<Color> cols,
+        List<float> activations,
+        List<int> lineInds,
+        Vector3 posDiff,
+        Vector3 zPos
+)
+    {
+        foreach (List<GridShape> inputFeaturemapOutFilterList in inputFeaturemapNestedList)
+        {
+            ProcessInputFeatureMap(
+                outFeaturemapVerts,
+                inputFeaturemapOutFilterList,
+                verts,
+                cols,
+                activations,
+                lineInds,
+                posDiff,
+                zPos);
+        }
+    }
+
+    protected void ProcessInputFeatureMap(
+        Vector3[] outFeaturemapVerts,
+        List<GridShape> inputFeaturemapOutFilterList,
+        List<Vector3> verts, List<Color> cols,
+        List<float> activations,
+        List<int> lineInds,
+        Vector3 posDiff,
+        Vector3 zPos)
+    {
+        int convGridIndex = 0;
+        foreach (GridShape convGrid in inputFeaturemapOutFilterList)
+        {
+            List<int> outFeaturemapVertInds = AddOutFeaturemapVertsForConvGrid(
+                outFeaturemapVerts,
+                convGridIndex,
+                verts,
+                cols,
+                zPos);
+
+
+            ProcessConvGrid(
+                outFeaturemapVertInds,
+                convGrid,
+                verts,
+                cols,
+                activations,
+                lineInds,
+                posDiff,
+                zPos);
+
+            convGridIndex += 1;
+        }
+    }
+
+    protected virtual List<int> AddOutFeaturemapVertsForConvGrid(
+        Vector3[] allOutputFeaturemapVerts,
+        int convGridIndex, List<Vector3> verts,
+        List<Color> cols,
+        Vector3 zPos)
+    {
+        List<int> outList = new List<int>();
+        verts.Add(allOutputFeaturemapVerts[convGridIndex] + zPos);
+        cols.Add(Color.black);
+        outList.Add(verts.Count - 1);
+        return outList;
+    }
+
+    protected void ProcessConvGrid(
+        List<int> outFeaturemapVertInds,
+        GridShape convGrid, List<Vector3> verts,
+        List<Color> cols, List<float> activations,
+        List<int> lineInds,
+        Vector3 posDiff,
+        Vector3 zPos)
+    {
+        foreach (Vector3 vert in convGrid.GetVertices(true))
+        {
+            verts.Add(vert + zPos + posDiff);
+            cols.Add(Color.black);
+            int endInd = verts.Count - 1;
+
+            foreach (int startInd in outFeaturemapVertInds)
+            {
+                lineInds.Add(startInd);
+                lineInds.Add(endInd);
+            }
+        }
+    }
+
+    protected virtual Vector3 EndVert(Vector3[] endverts, int inputFilterGrid)
+    {
+        return endverts[inputFilterGrid];
+    }
+
     public override Vector3Int GetOutputShape()
     {
-        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, reducedDepth);
+        return new Vector3Int(_featureMapResolution.x, _featureMapResolution.y, depth);
     }
 
     public override Vector2Int Get2DOutputShape()
@@ -387,13 +340,8 @@ public class ConvLayer : InputAcceptingLayer, I2DMapLayer
         return _activationTensorShape;
     }
 
-    public FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
+    public override bool Is2dLayer()
     {
-        Vector3[] filterPositions = GetInterpolatedNodePositions(); //not ideal  recalculating this everytime, but should have minor performance impact
-        FeatureMapInputProperties info = new FeatureMapInputProperties();
-        info.position = filterPositions[featureMapIndex];
-        info.inputShape = _featureMapResolution;
-        info.spacing = filterSpacing;
-        return info;
+        return true;
     }
 }

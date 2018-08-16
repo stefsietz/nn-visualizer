@@ -1,0 +1,104 @@
+ProcessInputFeatureMaps(GridShape outFeaturemapInputGrid,
+List<List<Shape>> inputFeaturemapNestedList,
+List<Vector3> verts,
+List<Color> cols,
+List<float> activations,
+List<int> lineInds,
+Vector3 posDiff,
+Vector3 zPos
+){
+	Vector3[] outFeaturemapVerts = outFeaturemapInputGrid.GetVertices(true);
+
+	foreach(List<GridShape> inputFeaturemapOutFilterList in inputFeaturemapNestedList){
+		ProcessInputFeatureMap(
+			Vector3[] outFeaturemapVerts,
+			List<GridShape> inputFeaturemapOutFilterList,
+			List<Vector3> verts,
+			List<Color> cols,
+			List<float> activations,
+			List<int> lineInds,
+			Vector3 posDiff,
+			Vector3 zPos);
+	}
+}
+
+ProcessInputFeatureMap(
+	Vector3[] outFeaturemapVerts,
+	List<GridShape> inputFeaturemapOutFilterList,
+	Vector3> verts,
+	List<Color> cols,
+	List<float> activations,
+	List<int> lineInds,
+	Vector3 posDiff,
+	Vector3 zPos){
+	
+	foreach(GridShape convGrid in inputFeaturemapOutFilterList){
+		List<int> outFeaturemapVertInds = AddOutFeaturemapVertsForConvGrid(
+			Vector3[] allOutputFeaturemapVerts,
+			int convGridIndex,
+			Vector3> verts,
+			List<Color> cols)
+	
+		ProcessConvGrid(
+			List<int> outFeaturemapVertInds,
+			GridShape convGrid,
+			List<Vector3> verts,
+			List<Color> cols,
+			List<float> activations,
+			List<int> lineInds,
+			Vector3 posDiff,
+			Vector3 zPos);
+	}
+}
+
+//ConvLayer
+List<int> AddOutFeaturemapVertsForConvGrid(
+	Vector3[] allOutputFeaturemapVerts,
+	int convGridIndex,
+	Vector3> verts,
+	List<Color> cols,
+	Vector3 zPos){
+		List<int> outList;
+		verts.Add(allOutputFeaturemapVerts[convGridIndex] + zPos);
+		cols.Add(Color.black);
+		outList.Add(verts.Count - 1);
+		return outList;
+}
+
+//FCLayer
+List<int> AddOutFeaturemapVertsForConvGrid(
+	Vector3[] allOutputFeaturemapVerts,
+	int convGridIndex,
+	Vector3> verts,
+	List<Color> cols,
+	Vector3 zPos){
+		List<int> outList;
+		foreach(Vector3 vert in allOutputFeaturemapVerts){
+			verts.Add(vert + zPos);
+			cols.Add(Color.black);
+			outList.Add(verts.Count - 1);
+		}
+		return outList;
+}
+
+ProcessConvGrid(
+	List<int> outFeaturemapVertInds,
+	GridShape convGrid,
+	List<Vector3> verts,
+	List<Color> cols,
+	List<float> activations,
+	List<int> lineInds,
+	Vector3 posDiff,
+	Vector3 zPos){
+	
+	foreach(Vector3 vert in convGrid.GetVertices(true)){
+		verts.Add(vert  + zPos + posDiff);
+		cols.Add(Color.black);
+		int endInd = verts.Count - 1;
+		
+		foreach(int startInd in outFeaturemapVertInds) {
+			lineInds.Add(startInd);
+			lineInds.Add(endInd);
+		}
+	}
+}

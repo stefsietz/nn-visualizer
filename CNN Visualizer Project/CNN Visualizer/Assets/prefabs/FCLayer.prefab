@@ -96,19 +96,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daf28d19270d97e4f973b63bfffac1aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  convShape: {x: 1, y: 1}
+  depth: 16
+  stride: {x: 0, y: 0}
+  dilution: {x: 0, y: 0}
+  padding: 0
   pointBrightness: 1
   weightBrightness: 1
   zOffset: 1
+  yOffset: 0
   epoch: 0
   showOriginalDepth: 0
   input: {fileID: 0}
-  reducedDepth: 16
   filterSpread: 1
   filterSpacing: 0.05
   edgeBundle: 0
   allCalculations: 0
   lineCircleGrid: 1
   lineXToZ: 0
-  fullDepth: 64
-  collapseInput: 0
+  fullDepth: 0
+  allFiltersSpacing: 0.5
+  convLocation: -1
+  fullResHeight: 5
   nodeSize: 0
+  collapseInput: 0

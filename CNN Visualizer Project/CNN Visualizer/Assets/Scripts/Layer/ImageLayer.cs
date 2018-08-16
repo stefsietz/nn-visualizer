@@ -8,9 +8,6 @@ public class ImageLayer : Layer, I2DMapLayer
     public Vector2Int fullResolution = new Vector2Int(224, 224);
     private Vector2Int _oldFullResolution;
 
-    public int depth = 3;
-    private int _oldDepth;
-
     public Vector2Int reducedResolution = new Vector2Int(11, 11);
     private Vector2Int _oldreducedResolution;
 
@@ -31,8 +28,6 @@ public class ImageLayer : Layer, I2DMapLayer
 
     public bool rgb = true;
 
-    private List<FeatureMap> _featureMaps;
-
     private GridShape _fullResGrid;
 
     private Dictionary<int, Array> _activationTensorPerEpoch = new Dictionary<int, Array>();
@@ -40,45 +35,26 @@ public class ImageLayer : Layer, I2DMapLayer
 
     public ImageLayer()
     {
+        depth = 3;
     }
 
-    protected override void UpdateForChangedParams()
+    protected override void UpdateForChangedParams(bool topoChanged)
     {
-        base.UpdateForChangedParams();
+        base.UpdateForChangedParams(topoChanged);
 
-        if (depth != _oldDepth ||
-            reducedResolution != _oldreducedResolution
-            || _oldFullResolution != fullResolution
-            || IsInitialized() == false
-            || _featureMaps == null)
-        {
-            InitFeatureMaps();
-            _oldreducedResolution = reducedResolution;
-            _oldFullResolution = fullResolution;
-            _oldDepth = depth;
-        }
+        UpdateFeatureMapsForInputParams(topoChanged);
 
-        if (_fullResGrid == null)
+
+        //TODO: fullres is broken at the moment
+        /*if (_fullResGrid == null)
             _fullResGrid = new GridShape(new Vector3(0, 0, this.ZPosition() - fullresOffset), fullResolution, new Vector2(pixelSpacing, pixelSpacing));
 
         _fullResGrid.position = new Vector3(0, 0, -fullresOffset);
         _fullResGrid.spacing = new Vector2(pixelSpacing, pixelSpacing);
-        _fullResGrid.resolution = fullResolution;
+        _fullResGrid.resolution = fullResolution;*/
     }
 
-    private void InitFeatureMaps()
-    {
-        Vector3[] filterPositions = GetInterpolatedFilterPositions();
-
-        _featureMaps = new List<FeatureMap>();
-        for (int i = 0; i < depth; i++)
-        {
-            FeatureMap map = new FeatureMap(this, i);
-            _featureMaps.Add(map);
-        }
-    }
-
-    private Vector3[] GetInterpolatedFilterPositions()
+    protected override Vector3[] GetInterpolatedFeatureMapPositions()
     {
         int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(depth));
         Vector3[] xLinePositions = LineShape.ScaledUnitLine(depth, new Vector3(0, 0, 0), new Vector3(1, 0, 0), spread);
@@ -87,25 +63,6 @@ public class ImageLayer : Layer, I2DMapLayer
         Vector3[] filterPositions = Shape.InterpolateShapes(xLinePositions, zLinePositions, xToZ);
 
         return filterPositions;
-    }
-
-    private void UpdateFeatureMaps()
-    {
-        if(_featureMaps == null)
-        {
-            InitFeatureMaps();
-            return;
-        }
-        int reducedDepthGridShape = Mathf.CeilToInt(Mathf.Sqrt(depth));
-        Vector3[] xLinePositions = LineShape.ScaledUnitLine(depth, new Vector3(0, 0, 0), new Vector3(1, 0, 0), spread);
-        Vector3[] zLinePositions = LineShape.ScaledUnitLine(depth, new Vector3(0, 0, 0), new Vector3(0, 0, 1), spread);
-
-        Vector3[] filterPositions = Shape.InterpolateShapes(xLinePositions, zLinePositions, xToZ);
-
-        for (int i = 0; i < _featureMaps.Count; i++)
-        {
-            _featureMaps[i].UpdateValuesForInputParams(this);
-        }
     }
 
     public override void CalcMesh()
@@ -156,39 +113,45 @@ public class ImageLayer : Layer, I2DMapLayer
 
         if (showOriginalResolution)
         {
-            Vector3[] v = _fullResGrid.GetVertices(true);
+            //TODO: temporarilly disabled
+            //AddFullResGeometry(verts, fullResInds, lineInds);
+        }
+    }
 
-            verts.AddRange(v);
-            for (int i = 0; i < v.Length; i++)
-            {
-                fullResInds.Add(verts.Count - v.Length + i);
-            }
+    private void AddFullResGeometry(List<Vector3> verts, List<int> fullResInds, List<int> lineInds)
+    {
+        Vector3[] v = _fullResGrid.GetVertices(true);
 
-            GridShape centerGrid = _featureMaps[_featureMaps.Count / 2].GetPixelGrid();
-            float[] bbox = centerGrid.GetBbox();
+        verts.AddRange(v);
+        for (int i = 0; i < v.Length; i++)
+        {
+            fullResInds.Add(verts.Count - v.Length + i);
+        }
 
-            float[] zpos = { 0, -fullresOffset };
+        GridShape centerGrid = _featureMaps[_featureMaps.Count / 2].GetPixelGrid();
+        float[] bbox = centerGrid.GetBbox();
 
-            List<int> lineStartEndInds = new List<int>();
-            foreach (float z in zpos)
-            {
-                verts.Add(new Vector3(bbox[0], bbox[1], centerGrid.position.z + z));
-                lineStartEndInds.Add(verts.Count - 1);
+        float[] zpos = { 0, -fullresOffset };
 
-                verts.Add(new Vector3(bbox[0], bbox[3], centerGrid.position.z + z));
-                lineStartEndInds.Add(verts.Count - 1);
+        List<int> lineStartEndInds = new List<int>();
+        foreach (float z in zpos)
+        {
+            verts.Add(new Vector3(bbox[0], bbox[1], centerGrid.position.z + z));
+            lineStartEndInds.Add(verts.Count - 1);
 
-                verts.Add(new Vector3(bbox[2], bbox[1], centerGrid.position.z + z));
-                lineStartEndInds.Add(verts.Count - 1);
+            verts.Add(new Vector3(bbox[0], bbox[3], centerGrid.position.z + z));
+            lineStartEndInds.Add(verts.Count - 1);
 
-                verts.Add(new Vector3(bbox[2], bbox[3], centerGrid.position.z + z));
-                lineStartEndInds.Add(verts.Count - 1);
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                lineInds.Add(lineStartEndInds[i]);
-                lineInds.Add(lineStartEndInds[i + 4]);
-            }
+            verts.Add(new Vector3(bbox[2], bbox[1], centerGrid.position.z + z));
+            lineStartEndInds.Add(verts.Count - 1);
+
+            verts.Add(new Vector3(bbox[2], bbox[3], centerGrid.position.z + z));
+            lineStartEndInds.Add(verts.Count - 1);
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            lineInds.Add(lineStartEndInds[i]);
+            lineInds.Add(lineStartEndInds[i + 4]);
         }
     }
 
@@ -220,28 +183,16 @@ public class ImageLayer : Layer, I2DMapLayer
         }
     }
 
-    protected override List<Shape> GetPointShapes()
+    protected override List<GridShape> GetPointShapes()
     {
-        UpdateFeatureMaps();
+        UpdateFeatureMapsForInputParams(true);
 
-        List<Shape> pixelGrids = new List<Shape>();
+        List<GridShape> pixelGrids = new List<GridShape>();
         for (int i = 0; i < _featureMaps.Count; i++)
         {
             pixelGrids.Add(_featureMaps[i].GetPixelGrid());
         }
         return pixelGrids;
-    }
-
-    public override List<List<Shape>> GetLineStartShapes(InputAcceptingLayer outputLayer, float allCalcs)
-    {
-        UpdateFeatureMaps();
-
-        List<List<Shape>> filterGrids = new List<List<Shape>>();
-        for (int i = 0; i < _featureMaps.Count; i++)
-        {
-            filterGrids.Add(_featureMaps[i].GetFilterGrids(outputLayer, allCalcs));
-        }
-        return filterGrids;
     }
 
     public override Vector3Int GetOutputShape()
@@ -274,13 +225,44 @@ public class ImageLayer : Layer, I2DMapLayer
         return _activationTensorShape;
     }
 
-    public FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
+    public override FeatureMapInputProperties GetFeatureMapInputProperties(int featureMapIndex)
     {
-        Vector3[] filterPositions = GetInterpolatedFilterPositions(); //not ideal  recalculating this everytime, but should have minor performance impact
+        Vector3[] filterPositions = GetInterpolatedFeatureMapPositions(); //not ideal  recalculating this everytime, but should have minor performance impact
         FeatureMapInputProperties info = new FeatureMapInputProperties();
         info.position = filterPositions[featureMapIndex];
         info.inputShape = reducedResolution;
         info.spacing = pixelSpacing;
         return info;
+    }
+
+    protected override bool CheckTopologyChanged_OneValidCall()
+    {
+        bool topologyChanged = false;
+
+        topologyChanged |= base.CheckTopologyChanged_OneValidCall();
+        topologyChanged |= CheckResolutionChanged_OneValidCall();
+        topologyChanged |= CheckFullResolutionChanged_OneValidCall();
+
+        return topologyChanged;
+    }
+
+    protected bool CheckResolutionChanged_OneValidCall()
+    {
+        if (reducedResolution != _oldreducedResolution)
+        {
+            _oldreducedResolution = reducedResolution;
+            return true;
+        }
+        return false;
+    }
+
+    protected bool CheckFullResolutionChanged_OneValidCall()
+    {
+        if (fullResolution != _oldFullResolution)
+        {
+            _oldFullResolution = fullResolution;
+            return true;
+        }
+        return false;
     }
 }
