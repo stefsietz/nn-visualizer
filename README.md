@@ -27,7 +27,7 @@ You have to select the containing folder after pressing the "Load" button.
 
 ## Contributing
 
-Contributions are very welcome! I think a lot of layer types still need to be implemented, also parallel architectures like for example used in Faster RCNN are not possible at the moment, and a lot of refactoring has to be done to make the project more extendable.
+At the moment (as of August 21th 2018), I am refactoring the project to make the code clearer. I started the project with a University deadline in mind and didn't think a lot about good code design, so a lot of rewriting / cleanup still has to be done.
 
 
 ## Authors
